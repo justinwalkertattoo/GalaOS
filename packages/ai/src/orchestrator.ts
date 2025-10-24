@@ -217,17 +217,19 @@ Respond in JSON format with: intent, entities, requiredTools, confidence`;
         input: { caption: '{{generate_caption.output}}' },
       },
       {
-        id: 'post_to_social',
+        id: 'post_to_buffer',
         agentId: 'social_media_manager',
-        action: 'post_to_platforms',
+        action: 'post_to_buffer',
         input: {
           images: '{{files}}',
           caption: '{{generate_caption.output}}',
           hashtags: '{{generate_hashtags.output}}',
-          platforms: ['instagram', 'buffer'],
+          // Buffer will handle Instagram posting since it's connected
+          profiles: 'instagram', // Will post to all Instagram profiles connected in Buffer
+          schedule: 'now', // or 'optimal' for Buffer's optimal timing
         },
         requiresHumanInput: true,
-        humanInputPrompt: 'Ready to post? Review the final content:',
+        humanInputPrompt: 'Ready to post via Buffer? This will publish to your connected Instagram account:',
       },
       {
         id: 'update_portfolio',

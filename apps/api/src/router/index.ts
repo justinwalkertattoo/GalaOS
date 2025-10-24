@@ -6,6 +6,7 @@ import { aiRouter } from './ai';
 import { integrationRouter } from './integration';
 import { orchestrationRouter } from './orchestration';
 import { inboxRouter } from './inbox';
+import { settingsRouter } from './settings';
 
 export const appRouter = router({
   auth: authRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   integration: integrationRouter,
   orchestration: orchestrationRouter,
   inbox: inboxRouter,
+  settings: settingsRouter,
 });
 
 export type AppRouter = typeof appRouter;
