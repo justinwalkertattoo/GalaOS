@@ -43,12 +43,21 @@ All unified in a single, powerful platform designed to help you manage your life
 - Error handling and retry logic
 - Execution history and debugging
 
-### 🤖 AI Integration
-- Multi-provider support (Anthropic Claude, OpenAI, more)
-- Conversational chat interface
-- AI agents with tool/function calling
-- Context-aware task execution
-- RAG (Retrieval Augmented Generation)
+### 🤖 AI Orchestration (NEW!)
+- **"Gala"** - Conversational AI assistant that understands complex tasks
+- **Multi-agent system** - Specialized agents for vision, content, social media, email
+- **Intelligent routing** - Automatically decomposes tasks and creates execution plans
+- **Tool calling** - AI agents can use integrations and APIs
+- **Human-in-the-loop** - Confirms actions before execution
+- **Context-aware** - Understands files, preferences, and history
+
+**Example**: Say "Gala, post these photos" with images attached, and watch as Gala:
+1. Analyzes images
+2. Generates caption (with your input)
+3. Creates hashtags
+4. Posts to Instagram & Buffer
+5. Updates portfolio
+6. Drafts email campaign
 
 ### 🔌 Integrations
 - OAuth 2.0 authentication flow
@@ -147,6 +156,7 @@ galaos/
 ## Documentation
 
 - **[Getting Started](./GETTING_STARTED.md)** - Setup and installation guide
+- **[AI Orchestration](./AI_ORCHESTRATION.md)** - Complete guide to Gala and the orchestration system
 - **[Architecture](./ARCHITECTURE.md)** - System architecture and design decisions
 - **[Roadmap](./ROADMAP.md)** - Feature roadmap and milestones
 - **[Contributing](./CONTRIBUTING.md)** - How to contribute to GalaOS
@@ -154,23 +164,29 @@ galaos/
 
 ## Roadmap
 
-GalaOS is currently in **Alpha (v0.1.0)**. See our [detailed roadmap](./ROADMAP.md) for planned features.
+GalaOS is currently in **Alpha (v0.2.0)**. See our [detailed roadmap](./ROADMAP.md) for planned features.
 
-### Current Phase: Foundation (MVP)
+### Current Phase: AI Orchestration ⚡ NEW!
 - ✅ Core infrastructure (database, API, frontend)
 - ✅ User authentication
 - ✅ Basic workspace management
 - ✅ AI chat interface
+- ✅ **AI Orchestration System** - "Gala" conversational assistant
+- ✅ **Multi-agent coordination** - Specialized AI agents working together
+- ✅ **Workflow execution engine** - Automated task workflows
+- ✅ **Integration framework** - Buffer, Instagram, SendGrid connectors
+- ✅ **Universal Inbox** - Single input for all tasks
+- ✅ **File upload support** - Attach images and files to conversations
 - 🚧 Rich text editor
-- 🚧 Workflow builder
-- 🚧 Integration framework
+- 🚧 Visual workflow builder UI
+- 🚧 OAuth flows for integrations
 
-### Next Phase: Core Features
-- Workflow execution engine
-- Database management
-- 20+ pre-built integrations
-- AI agents with function calling
-- RAG support
+### Next Phase: Visual Builder & More Integrations
+- Visual drag-and-drop workflow builder
+- OAuth authentication for all integrations
+- 50+ pre-built integrations
+- RAG support with vector database
+- Real-time collaboration
 
 ## Use Cases
 
