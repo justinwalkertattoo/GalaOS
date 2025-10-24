@@ -9,23 +9,52 @@ import {
   portfolioManagerConfig,
   emailMarketerConfig,
 } from '@galaos/ai/src/agents';
-
-// Create global orchestrator instance
-const orchestrator = new AIOrchestrator({
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-  openaiApiKey: process.env.OPENAI_API_KEY,
-  defaultProvider: 'anthropic',
-});
-
-// Register predefined agents
-orchestrator.registerAgent(visionAnalyzerConfig);
-orchestrator.registerAgent(contentCreatorConfig);
-orchestrator.registerAgent(socialMediaManagerConfig);
-orchestrator.registerAgent(portfolioManagerConfig);
-orchestrator.registerAgent(emailMarketerConfig);
+import { encryptionService } from '../services/encryption';
 
 // Workflow engine instance
 const workflowEngine = new WorkflowEngine();
+
+// Helper to create user-specific orchestrator
+async function createUserOrchestrator(ctx: any): Promise<AIOrchestrator> {
+  // Try to get user's API keys from database
+  const anthropicKey = await ctx.prisma.apiKey.findFirst({
+    where: {
+      userId: ctx.user.id,
+      name: { contains: 'anthropic', mode: 'insensitive' },
+    },
+  });
+
+  const openaiKey = await ctx.prisma.apiKey.findFirst({
+    where: {
+      userId: ctx.user.id,
+      name: { contains: 'openai', mode: 'insensitive' },
+    },
+  });
+
+  // Decrypt keys if found, otherwise fall back to env variables
+  const anthropicApiKey = anthropicKey
+    ? encryptionService.decrypt(anthropicKey.key)
+    : process.env.ANTHROPIC_API_KEY;
+
+  const openaiApiKey = openaiKey
+    ? encryptionService.decrypt(openaiKey.key)
+    : process.env.OPENAI_API_KEY;
+
+  const orchestrator = new AIOrchestrator({
+    anthropicApiKey,
+    openaiApiKey,
+    defaultProvider: 'anthropic',
+  });
+
+  // Register predefined agents
+  orchestrator.registerAgent(visionAnalyzerConfig);
+  orchestrator.registerAgent(contentCreatorConfig);
+  orchestrator.registerAgent(socialMediaManagerConfig);
+  orchestrator.registerAgent(portfolioManagerConfig);
+  orchestrator.registerAgent(emailMarketerConfig);
+
+  return orchestrator;
+}
 
 export const orchestrationRouter = router({
   // Analyze user intent
@@ -36,7 +65,8 @@ export const orchestrationRouter = router({
         context: z.any().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const orchestrator = await createUserOrchestrator(ctx);
       const intent = await orchestrator.analyzeIntent(input.message, input.context);
       return intent;
     }),
@@ -49,7 +79,8 @@ export const orchestrationRouter = router({
         context: z.any().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const orchestrator = await createUserOrchestrator(ctx);
       const plan = await orchestrator.createOrchestrationPlan(input.message, input.context);
       return plan;
     }),
@@ -155,7 +186,8 @@ export const orchestrationRouter = router({
         context: z.any().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const orchestrator = await createUserOrchestrator(ctx);
       const response = await orchestrator.gala(input.message, input.context);
       return { response };
     }),

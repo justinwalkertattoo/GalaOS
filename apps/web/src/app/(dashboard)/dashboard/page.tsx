@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc';
-import { LayoutDashboard, Workflow, MessageSquare, Database, Plus } from 'lucide-react';
+import { LayoutDashboard, Workflow, MessageSquare, Database, Settings, Sparkles } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -51,6 +51,13 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <QuickActionCard
+            icon={<Sparkles className="w-8 h-8 text-purple-600" />}
+            title="✨ Gala"
+            description="AI assistant with orchestration"
+            onClick={() => router.push('/dashboard/gala')}
+            highlight={true}
+          />
+          <QuickActionCard
             icon={<LayoutDashboard className="w-8 h-8" />}
             title="New Page"
             description="Create a new workspace page"
@@ -58,21 +65,15 @@ export default function DashboardPage() {
           />
           <QuickActionCard
             icon={<Workflow className="w-8 h-8" />}
-            title="New Workflow"
-            description="Build an automation workflow"
-            onClick={() => router.push('/dashboard/workflows/new')}
+            title="Workflows"
+            description="Build automation workflows"
+            onClick={() => router.push('/dashboard/workflows')}
           />
           <QuickActionCard
-            icon={<MessageSquare className="w-8 h-8" />}
-            title="AI Chat"
-            description="Start a conversation with AI"
-            onClick={() => router.push('/dashboard/chat')}
-          />
-          <QuickActionCard
-            icon={<Database className="w-8 h-8" />}
-            title="New Database"
-            description="Create a new database"
-            onClick={() => router.push('/dashboard/databases/new')}
+            icon={<Settings className="w-8 h-8" />}
+            title="Settings"
+            description="Manage API keys & integrations"
+            onClick={() => router.push('/dashboard/settings')}
           />
         </div>
 
@@ -93,20 +94,26 @@ function QuickActionCard({
   title,
   description,
   onClick,
+  highlight = false,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
   onClick: () => void;
+  highlight?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-left w-full"
+      className={`rounded-lg shadow p-6 hover:shadow-lg transition-all text-left w-full ${
+        highlight
+          ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+          : 'bg-white dark:bg-gray-800'
+      }`}
     >
-      <div className="text-blue-600 dark:text-blue-400 mb-3">{icon}</div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <div className={highlight ? 'mb-3' : 'text-blue-600 dark:text-blue-400 mb-3'}>{icon}</div>
+      <h3 className={`text-lg font-semibold mb-1 ${highlight ? '' : 'text-gray-900 dark:text-white'}`}>{title}</h3>
+      <p className={`text-sm ${highlight ? 'text-white/90' : 'text-gray-600 dark:text-gray-400'}`}>{description}</p>
     </button>
   );
 }
