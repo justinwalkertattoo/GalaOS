@@ -149,7 +149,13 @@ function SandboxEditor({ sandbox, onUpdate }: { sandbox: any; onUpdate: () => vo
   const [code, setCode] = useState('');
   const [output, setOutput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
-  const [view, setView] = useState<'split' | 'code' | 'output'>('split');
+  const [view, setView] = useState<'split' | 'code' | 'output' | 'preview'>('split');
+  const [htmlCode, setHtmlCode] = useState('');
+  const [cssCode, setCssCode] = useState('');
+  const [jsCode, setJsCode] = useState('');
+  const previewRef = useRef<HTMLIFrameElement>(null);
+
+  const isWebLanguage = sandbox.language === 'javascript' || sandbox.language === 'typescript';
 
   const executeMutation = trpc.sandbox.execute.useMutation();
   const startMutation = trpc.sandbox.start.useMutation();
@@ -194,6 +200,31 @@ function SandboxEditor({ sandbox, onUpdate }: { sandbox: any; onUpdate: () => vo
     }
   };
 
+  // Update preview for web languages
+  useEffect(() => {
+    if (isWebLanguage && previewRef.current) {
+      const previewDoc = previewRef.current.contentDocument;
+      if (previewDoc) {
+        const fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>${cssCode}</style>
+</head>
+<body>
+  ${htmlCode}
+  <script>${jsCode}<\/script>
+</body>
+</html>`;
+        previewDoc.open();
+        previewDoc.write(fullHtml);
+        previewDoc.close();
+      }
+    }
+  }, [htmlCode, cssCode, jsCode, isWebLanguage]);
+
   // Sample code templates
   useEffect(() => {
     const templates: Record<string, string> = {
@@ -205,8 +236,19 @@ function SandboxEditor({ sandbox, onUpdate }: { sandbox: any; onUpdate: () => vo
       rust: `fn main() {\n    println!("Hello from GalaOS Sandbox!");\n}`,
     };
 
-    if (!code) {
+    const webTemplates = {
+      html: `<div class="container">\n  <h1>Hello from GalaOS!</h1>\n  <p>Start building your web app here.</p>\n  <button onclick="handleClick()">Click Me!</button>\n</div>`,
+      css: `* {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n}\n\nbody {\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n  min-height: 100vh;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.container {\n  background: white;\n  padding: 2rem;\n  border-radius: 1rem;\n  box-shadow: 0 20px 60px rgba(0,0,0,0.3);\n  text-align: center;\n}\n\nh1 {\n  color: #667eea;\n  margin-bottom: 1rem;\n}\n\nbutton {\n  background: #667eea;\n  color: white;\n  border: none;\n  padding: 0.75rem 2rem;\n  border-radius: 0.5rem;\n  font-size: 1rem;\n  cursor: pointer;\n  margin-top: 1rem;\n  transition: all 0.3s;\n}\n\nbutton:hover {\n  background: #764ba2;\n  transform: translateY(-2px);\n  box-shadow: 0 5px 15px rgba(0,0,0,0.2);\n}`,
+      js: `function handleClick() {\n  alert('Hello from GalaOS Sandbox!');\n  console.log('Button clicked!');\n}\n\nconsole.log('Web app loaded!');`,
+    };
+
+    if (!code && !htmlCode) {
       setCode(templates[sandbox.language] || '// Start coding...');
+      if (isWebLanguage) {
+        setHtmlCode(webTemplates.html);
+        setCssCode(webTemplates.css);
+        setJsCode(webTemplates.js);
+      }
     }
   }, [sandbox.language]);
 
@@ -263,6 +305,7 @@ function SandboxEditor({ sandbox, onUpdate }: { sandbox: any; onUpdate: () => vo
               <option value="split">Split</option>
               <option value="code">Code Only</option>
               <option value="output">Output Only</option>
+              {isWebLanguage && <option value="preview">Live Preview</option>}
             </select>
           </div>
         </div>
@@ -291,37 +334,146 @@ function SandboxEditor({ sandbox, onUpdate }: { sandbox: any; onUpdate: () => vo
 
       {/* Editor and Output */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Code Editor */}
-        {(view === 'split' || view === 'code') && (
-          <div className={`${view === 'split' ? 'flex-1' : 'w-full'} flex flex-col`}>
-            <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
-              Editor
+        {/* Live Preview Mode for Web Languages */}
+        {view === 'preview' && isWebLanguage ? (
+          <>
+            {/* Web Code Editors (HTML/CSS/JS) */}
+            <div className="flex-1 flex flex-col">
+              <WebCodeEditor
+                htmlCode={htmlCode}
+                cssCode={cssCode}
+                jsCode={jsCode}
+                onHtmlChange={setHtmlCode}
+                onCssChange={setCssCode}
+                onJsChange={setJsCode}
+              />
             </div>
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="flex-1 p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm resize-none focus:outline-none"
-              placeholder="Write your code here..."
-              spellCheck={false}
-            />
-          </div>
-        )}
 
-        {/* Output Terminal */}
-        {(view === 'split' || view === 'output') && (
-          <div
-            className={`${
-              view === 'split' ? 'flex-1 border-l border-gray-200 dark:border-gray-700' : 'w-full'
-            } flex flex-col`}
+            {/* Live Preview Canvas */}
+            <div className="flex-1 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+              <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <span>Live Preview</span>
+                <Monitor className="w-4 h-4 text-blue-500" />
+              </div>
+              <iframe
+                ref={previewRef}
+                className="flex-1 bg-white w-full h-full"
+                sandbox="allow-scripts"
+                title="Preview"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Standard Code Editor */}
+            {(view === 'split' || view === 'code') && (
+              <div className={`${view === 'split' ? 'flex-1' : 'w-full'} flex flex-col`}>
+                <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+                  Editor
+                </div>
+                <textarea
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="flex-1 p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm resize-none focus:outline-none"
+                  placeholder="Write your code here..."
+                  spellCheck={false}
+                />
+              </div>
+            )}
+
+            {/* Output Terminal */}
+            {(view === 'split' || view === 'output') && (
+              <div
+                className={`${
+                  view === 'split' ? 'flex-1 border-l border-gray-200 dark:border-gray-700' : 'w-full'
+                } flex flex-col`}
+              >
+                <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <span>Output</span>
+                  <Monitor className="w-4 h-4" />
+                </div>
+                <div className="flex-1 p-4 bg-black text-green-400 font-mono text-sm overflow-auto whitespace-pre-wrap">
+                  {output || '> Ready to execute code...'}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WebCodeEditor({
+  htmlCode,
+  cssCode,
+  jsCode,
+  onHtmlChange,
+  onCssChange,
+  onJsChange,
+}: {
+  htmlCode: string;
+  cssCode: string;
+  jsCode: string;
+  onHtmlChange: (code: string) => void;
+  onCssChange: (code: string) => void;
+  onJsChange: (code: string) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'html' | 'css' | 'js'>('html');
+
+  const tabs = [
+    { id: 'html' as const, label: 'HTML', color: 'text-orange-600' },
+    { id: 'css' as const, label: 'CSS', color: 'text-blue-600' },
+    { id: 'js' as const, label: 'JavaScript', color: 'text-yellow-600' },
+  ];
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Tabs */}
+      <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-6 py-3 text-sm font-medium transition-all ${
+              activeTab === tab.id
+                ? 'bg-white dark:bg-gray-900 border-b-2 border-blue-500 ' + tab.color
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
           >
-            <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <span>Output</span>
-              <Monitor className="w-4 h-4" />
-            </div>
-            <div className="flex-1 p-4 bg-black text-green-400 font-mono text-sm overflow-auto whitespace-pre-wrap">
-              {output || '> Ready to execute code...'}
-            </div>
-          </div>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Editors */}
+      <div className="flex-1 relative">
+        {activeTab === 'html' && (
+          <textarea
+            value={htmlCode}
+            onChange={(e) => onHtmlChange(e.target.value)}
+            className="absolute inset-0 w-full h-full p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm resize-none focus:outline-none"
+            placeholder="<!-- HTML code here -->"
+            spellCheck={false}
+          />
+        )}
+        {activeTab === 'css' && (
+          <textarea
+            value={cssCode}
+            onChange={(e) => onCssChange(e.target.value)}
+            className="absolute inset-0 w-full h-full p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm resize-none focus:outline-none"
+            placeholder="/* CSS code here */"
+            spellCheck={false}
+          />
+        )}
+        {activeTab === 'js' && (
+          <textarea
+            value={jsCode}
+            onChange={(e) => onJsChange(e.target.value)}
+            className="absolute inset-0 w-full h-full p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm resize-none focus:outline-none"
+            placeholder="// JavaScript code here"
+            spellCheck={false}
+          />
         )}
       </div>
     </div>
