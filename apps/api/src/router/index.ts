@@ -10,6 +10,8 @@ import { settingsRouter } from './settings';
 import { agentsRouter } from './agents';
 import { modelsRouter } from './models';
 import { sandboxRouter } from './sandbox';
+import { toolsRouter } from './tools';
+import { skillsRouter } from './skills';
 
 export const appRouter = router({
   auth: authRouter,
@@ -23,6 +25,8 @@ export const appRouter = router({
   agents: agentsRouter,
   models: modelsRouter,
   sandbox: sandboxRouter,
+  tools: toolsRouter,
+  skills: skillsRouter,
 });
 
 export type AppRouter = typeof appRouter;
