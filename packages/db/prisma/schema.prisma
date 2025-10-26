@@ -34,6 +34,12 @@ model User {
   conversations Conversation[]
   apiKeys       ApiKey[]
   integrations  Integration[]
+  agents        Agent[]
+  tools         Tool[]
+  skills        Skill[]
+  modelProviders ModelProvider[]
+  agentConversations AgentConversation[]
+  sandboxes     Sandbox[]
 
   @@map("users")
 }
@@ -356,4 +362,186 @@ model Webhook {
   updatedAt   DateTime @updatedAt
 
   @@map("webhooks")
+}
+// ============================================================================
+// AI AGENTS & ASSISTANTS
+// ============================================================================
+
+model Agent {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Basic Info
+  name        String
+  description String?
+  avatar      String?
+
+  // Gamification
+  level       Int      @default(1)
+  xp          Int      @default(0)
+  badges      String[] @default([])
+
+  // AI Configuration
+  provider    String   // anthropic, openai, ollama, docker
+  model       String
+  systemPrompt String  @db.Text
+  temperature Float?   @default(0.7)
+  maxTokens   Int?     @default(4096)
+
+  // Capabilities
+  tools       Json?    // Array of tool IDs
+  skills      Json?    // Array of skill IDs
+
+  // Stats
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations AgentConversation[]
+
+  @@map("agents")
+}
+
+model Tool {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system tool
+
+  name        String
+  description String
+  category    String   // code, data, api, file, etc.
+  icon        String?
+
+  // Function definition
+  functionName String  @unique
+  parameters  Json     // JSON schema
+  code        String   @db.Text // Actual implementation
+
+  // Gamification
+  tier        String   @default("common") // common, rare, epic, legendary
+  unlockLevel Int      @default(1)
+
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tools")
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system skill
+
+  name        String
+  description String
+  category    String   // coding, writing, analysis, etc.
+  icon        String?
+
+  // Skill tree
+  parentId    String?
+  requirements Json?   // Required skills/level
+
+  // Effects
+  effects     Json     // What this skill enables
+
+  // Gamification
+  tier        String   @default("common")
+  xpCost      Int      @default(100)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      Skill?   @relation("SkillTree", fields: [parentId], references: [id])
+  children    Skill[]  @relation("SkillTree")
+
+  @@map("skills")
+}
+
+model ModelProvider {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system provider
+
+  name        String
+  type        String   // cloud, ollama, docker
+
+  // Connection details
+  baseUrl     String?
+  apiKey      String?  // Encrypted
+
+  // Available models
+  models      Json     // Array of model configurations
+
+  // Status
+  isActive    Boolean  @default(true)
+  lastChecked DateTime?
+  status      String   @default("unknown") // online, offline, error
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("model_providers")
+}
+
+model AgentConversation {
+  id          String   @id @default(cuid())
+  agentId     String
+  userId      String
+
+  title       String?
+  messages    Json     // Array of messages
+
+  // Execution context
+  sandboxId   String?
+  context     Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sandbox     Sandbox? @relation(fields: [sandboxId], references: [id])
+
+  @@map("agent_conversations")
+}
+
+model Sandbox {
+  id          String   @id @default(cuid())
+  userId      String
+
+  name        String
+  language    String   // python, javascript, typescript, etc.
+
+  // Docker container
+  containerId String?
+  image       String   @default("node:20-alpine")
+  status      String   @default("stopped") // stopped, running, error
+
+  // File system
+  files       Json     @default("{}")
+
+  // Execution history
+  executions  Json     @default("[]")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastRunAt   DateTime?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations AgentConversation[]
+
+  @@map("sandboxes")
 }
