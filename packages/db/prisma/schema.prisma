@@ -475,13 +475,19 @@ model ModelProvider {
 
   name        String
   type        String   // cloud, ollama, docker
+  provider    String   // anthropic, openai, ollama, docker
 
   // Connection details
   baseUrl     String?
   apiKey      String?  // Encrypted
+  containerName String? // For docker providers
+  model       String?  // Default model
+
+  // Configuration
+  config      Json     @default("{}")
 
   // Available models
-  models      Json     // Array of model configurations
+  models      Json     @default("[]") // Array of model configurations
 
   // Status
   isActive    Boolean  @default(true)

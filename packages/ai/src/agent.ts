@@ -1,5 +1,5 @@
 import { AgentConfig, Message, AgentResponse, ToolCall } from './types';
-import { createProvider, AIProviderClient } from './providers';
+import { createProvider, AIProviderClient, ProviderConfig } from './providers';
 import { ToolRegistry } from './tool-registry';
 
 export class Agent {
@@ -8,9 +8,9 @@ export class Agent {
   private conversationHistory: Message[] = [];
   private toolRegistry: ToolRegistry;
 
-  constructor(config: AgentConfig, apiKey: string, toolRegistry?: ToolRegistry) {
+  constructor(config: AgentConfig, providerConfig: ProviderConfig, toolRegistry?: ToolRegistry) {
     this.config = config;
-    this.provider = createProvider(config.provider, apiKey);
+    this.provider = createProvider(providerConfig);
     this.toolRegistry = toolRegistry || new ToolRegistry();
 
     // Register agent's tools
