@@ -16,6 +16,7 @@ import {
   Terminal,
   Users,
   FolderOpen,
+  Server,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ export default function DashboardLayout({ children }: SidebarProps) {
     { icon: MessageSquare, label: 'Chat', path: '/dashboard/chat', color: 'text-blue-500' },
     { icon: Terminal, label: 'Code Sandbox', path: '/dashboard/sandbox', color: 'text-green-500' },
     { icon: Bot, label: 'Agents', path: '/dashboard/agents', color: 'text-cyan-500' },
+    { icon: Server, label: 'Models', path: '/dashboard/models', color: 'text-indigo-500' },
     { icon: Users, label: 'Assistants', path: '/dashboard/assistants', color: 'text-pink-500' },
     { icon: Wrench, label: 'Tools', path: '/dashboard/tools', color: 'text-orange-500' },
     { icon: Code, label: 'Skills', path: '/dashboard/skills', color: 'text-indigo-500' },

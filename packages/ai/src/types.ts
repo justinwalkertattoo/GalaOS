@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export type AIProvider = 'anthropic' | 'openai' | 'local';
+export type AIProvider = 'anthropic' | 'openai' | 'ollama' | 'docker';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';

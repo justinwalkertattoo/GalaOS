@@ -1,23 +1,30 @@
 import { Agent } from './agent';
-import { AgentConfig, TaskIntent, OrchestrationPlan, WorkflowStep, Message } from './types';
+import { AgentConfig, TaskIntent, OrchestrationPlan, WorkflowStep, Message, AIProvider } from './types';
 import { ToolRegistry, globalToolRegistry } from './tool-registry';
+import { ProviderConfig } from './providers';
 import { z } from 'zod';
+
+export interface OrchestratorConfig {
+  anthropicApiKey?: string;
+  openaiApiKey?: string;
+  defaultProvider?: AIProvider;
+  ollamaBaseUrl?: string;
+  dockerProviders?: Array<{ containerName: string; baseUrl: string; model: string }>;
+}
 
 export class AIOrchestrator {
   private agents: Map<string, Agent> = new Map();
   private toolRegistry: ToolRegistry;
   private routerAgent: Agent;
 
-  constructor(
-    private config: {
-      anthropicApiKey?: string;
-      openaiApiKey?: string;
-      defaultProvider?: 'anthropic' | 'openai';
-    }
-  ) {
+  constructor(private config: OrchestratorConfig) {
     this.toolRegistry = globalToolRegistry;
 
     // Create router agent - the "brain" that analyzes intent
+    const routerProviderConfig = this.createProviderConfig(
+      config.defaultProvider || 'anthropic'
+    );
+
     this.routerAgent = new Agent(
       {
         id: 'router',
@@ -39,29 +46,54 @@ Always respond with structured analysis of the task.`,
         provider: config.defaultProvider || 'anthropic',
         model: 'claude-3-5-sonnet-20241022',
       },
-      config.anthropicApiKey || config.openaiApiKey || ''
+      routerProviderConfig,
+      this.toolRegistry
     );
   }
 
-  registerAgent(config: AgentConfig, apiKey?: string): Agent {
-    const key = apiKey || this.getApiKey(config.provider);
-    const agent = new Agent(config, key, this.toolRegistry);
+  private createProviderConfig(provider: AIProvider, modelName?: string): ProviderConfig {
+    switch (provider) {
+      case 'anthropic':
+        return {
+          provider: 'anthropic',
+          apiKey: this.config.anthropicApiKey,
+        };
+      case 'openai':
+        return {
+          provider: 'openai',
+          apiKey: this.config.openaiApiKey,
+        };
+      case 'ollama':
+        return {
+          provider: 'ollama',
+          baseUrl: this.config.ollamaBaseUrl || 'http://localhost:11434',
+          model: modelName || 'llama2',
+        };
+      case 'docker':
+        const dockerProvider = this.config.dockerProviders?.[0];
+        if (!dockerProvider) {
+          throw new Error('No Docker providers configured');
+        }
+        return {
+          provider: 'docker',
+          containerName: dockerProvider.containerName,
+          baseUrl: dockerProvider.baseUrl,
+          model: dockerProvider.model,
+        };
+      default:
+        throw new Error(`Unsupported provider: ${provider}`);
+    }
+  }
+
+  registerAgent(config: AgentConfig, providerConfig?: ProviderConfig): Agent {
+    const finalProviderConfig = providerConfig || this.createProviderConfig(config.provider, config.model);
+    const agent = new Agent(config, finalProviderConfig, this.toolRegistry);
     this.agents.set(config.id, agent);
     return agent;
   }
 
   getAgent(id: string): Agent | undefined {
     return this.agents.get(id);
-  }
-
-  private getApiKey(provider: 'anthropic' | 'openai' | 'local'): string {
-    if (provider === 'anthropic' && this.config.anthropicApiKey) {
-      return this.config.anthropicApiKey;
-    }
-    if (provider === 'openai' && this.config.openaiApiKey) {
-      return this.config.openaiApiKey;
-    }
-    throw new Error(`No API key configured for provider: ${provider}`);
   }
 
   async analyzeIntent(userInput: string, context?: any): Promise<TaskIntent> {
