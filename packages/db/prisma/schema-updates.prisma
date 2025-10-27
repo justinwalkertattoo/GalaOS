@@ -1,0 +1,155 @@
+// Additional models needed for enhanced inbox and knowledge system
+// Add these to your main schema.prisma file
+
+model InboxItem {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Content
+  type        String   // url, file, text, image, audio, video
+  content     String?  @db.Text
+  url         String?
+  fileName    String?
+  fileSize    Int?
+  mimeType    String?
+
+  // Processing
+  status      String   @default("pending") // pending, processing, completed, failed
+  metadata    Json     @default("{}")
+  processedAt DateTime?
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("inbox_items")
+}
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system knowledge
+
+  // Content
+  content     String   @db.Text
+  summary     String?
+  embedding   String?  // Store embedding reference or vector ID
+
+  // Source
+  source      String?  // url, file, conversation, etc.
+  sourceId    String?  // Reference to source
+
+  // Metadata
+  category    String?
+  tags        String[] @default([])
+  confidence  Float?   @default(1.0)
+
+  // Verification
+  verified    Boolean  @default(false)
+  verifiedAt  DateTime?
+  verifiedBy  String?  // LLM or human
+
+  // Contradiction detection
+  contradicts String[] @default([]) // IDs of contradicting knowledge
+  supersedes  String?  // ID of knowledge this replaces
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@index([verified])
+  @@map("knowledge_base")
+}
+
+model MemorySnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Memory data
+  type        String   // conversation, fact, skill, preference
+  content     Json
+  embedding   String?
+
+  // Temporal
+  timestamp   DateTime @default(now())
+  context     String?
+  importance  Float    @default(0.5)
+
+  // Consolidation
+  consolidated Boolean  @default(false)
+  consolidatedInto String?
+
+  // Access tracking
+  accessCount Int      @default(0)
+  lastAccessed DateTime?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, timestamp])
+  @@index([type])
+  @@index([importance])
+  @@map("memory_snapshots")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+
+  // Audit info
+  type        String   // knowledge_verification, memory_consolidation, hallucination_check
+  scope       String   // all, user_specific, system
+
+  // Results
+  status      String   // completed, failed, in_progress
+  findings    Json     @default("{}")
+  actions     Json     @default("{}")
+
+  // Metadata
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?     // seconds
+
+  @@index([type, status])
+  @@index([startedAt])
+  @@map("audit_logs")
+}
+
+model ArtStyleModel {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Model info
+  name        String
+  description String?
+  modelPath   String   // Path in MinIO or model registry
+  modelType   String   // lora, full_model, etc.
+
+  // Training data
+  trainingImages Int    @default(0)
+  trainingSteps  Int?
+  baseModel      String // stable-diffusion-xl, etc.
+
+  // Status
+  status      String   @default("training") // training, ready, failed
+  progress    Float?   @default(0.0)
+
+  // Metadata
+  hyperparameters Json?
+  metrics         Json?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+  @@map("art_style_models")
+}

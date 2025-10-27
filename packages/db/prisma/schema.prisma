@@ -1,0 +1,553 @@
+// GalaOS Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER & AUTH
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  username      String?   @unique
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  workspaces    WorkspaceMember[]
+  pages         Page[]
+  workflows     Workflow[]
+  conversations Conversation[]
+  apiKeys       ApiKey[]
+  integrations  Integration[]
+  agents        Agent[]
+  tools         Tool[]
+  skills        Skill[]
+  modelProviders ModelProvider[]
+  agentConversations AgentConversation[]
+  sandboxes     Sandbox[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// WORKSPACE & CONTENT MANAGEMENT
+// ============================================================================
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     WorkspaceMember[]
+  pages       Page[]
+  databases   Database[]
+  workflows   Workflow[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        String   @default("member") // owner, admin, member, viewer
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Page {
+  id          String   @id @default(cuid())
+  title       String
+  content     Json?    // Rich text content (blocks)
+  icon        String?
+  coverImage  String?
+
+  workspaceId String?
+  parentId    String?
+  authorId    String
+
+  isPublished Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent      Page?      @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Page[]     @relation("PageHierarchy")
+  author      User       @relation(fields: [authorId], references: [id])
+
+  @@map("pages")
+}
+
+model Database {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+
+  workspaceId String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  properties  DatabaseProperty[]
+  items       DatabaseItem[]
+
+  @@map("databases")
+}
+
+model DatabaseProperty {
+  id         String   @id @default(cuid())
+  name       String
+  type       String   // text, number, select, multi_select, date, checkbox, url, email, phone, file, relation
+  options    Json?    // For select/multi-select options
+
+  databaseId String
+
+  database   Database @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+
+  @@map("database_properties")
+}
+
+model DatabaseItem {
+  id         String   @id @default(cuid())
+  properties Json     // Key-value pairs matching DatabaseProperty
+
+  databaseId String
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  database   Database @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+
+  @@map("database_items")
+}
+
+// ============================================================================
+// WORKFLOW ENGINE
+// ============================================================================
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+
+  // Workflow definition (nodes, edges, config)
+  definition  Json
+
+  // Trigger configuration
+  trigger     Json?
+
+  isActive    Boolean  @default(false)
+
+  workspaceId String?
+  authorId    String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workspace   Workspace?        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  author      User              @relation(fields: [authorId], references: [id])
+  executions  WorkflowExecution[]
+
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id          String   @id @default(cuid())
+  workflowId  String
+
+  status      String   // pending, running, success, failed, cancelled
+  input       Json?
+  output      Json?
+  error       String?
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  // Execution trace for debugging
+  trace       Json?
+
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_executions")
+}
+
+// ============================================================================
+// AI & CONVERSATIONS
+// ============================================================================
+
+model Conversation {
+  id          String   @id @default(cuid())
+  title       String?
+
+  userId      String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+
+  role           String   // user, assistant, system, function
+  content        String   @db.Text
+
+  // For function calling
+  functionCall   Json?
+  functionResult Json?
+
+  // Metadata
+  metadata       Json?
+
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model AIProvider {
+  id       String @id @default(cuid())
+  name     String @unique // openai, anthropic, cohere, etc.
+  isActive Boolean @default(true)
+  config   Json?  // Provider-specific configuration
+
+  @@map("ai_providers")
+}
+
+// ============================================================================
+// INTEGRATIONS & API KEYS
+// ============================================================================
+
+model Integration {
+  id            String   @id @default(cuid())
+  userId        String
+
+  // Integration details
+  provider      String   // google, slack, github, etc.
+  accountName   String?  // Display name for this connection
+
+  // OAuth tokens (encrypted)
+  accessToken   String   @db.Text
+  refreshToken  String?  @db.Text
+  expiresAt     DateTime?
+
+  scope         String?
+
+  isActive      Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("integrations")
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  userId      String
+
+  name        String
+  key         String   @unique // Hashed API key
+  keyPreview  String   // First few characters for display
+
+  // Permissions
+  scopes      String[] @default([])
+
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ============================================================================
+// WEBHOOKS
+// ============================================================================
+
+model Webhook {
+  id          String   @id @default(cuid())
+  url         String
+  secret      String
+
+  events      String[] // List of event types to trigger on
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("webhooks")
+}
+// ============================================================================
+// AI AGENTS & ASSISTANTS
+// ============================================================================
+
+model Agent {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Basic Info
+  name        String
+  description String?
+  avatar      String?
+
+  // Gamification
+  level       Int      @default(1)
+  xp          Int      @default(0)
+  badges      String[] @default([])
+
+  // AI Configuration
+  provider    String   // anthropic, openai, ollama, docker
+  model       String
+  systemPrompt String  @db.Text
+  temperature Float?   @default(0.7)
+  maxTokens   Int?     @default(4096)
+
+  // Capabilities
+  tools       Json?    // Array of tool IDs
+  skills      Json?    // Array of skill IDs
+
+  // Stats
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations AgentConversation[]
+
+  @@map("agents")
+}
+
+model Tool {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system tool
+
+  name        String
+  description String
+  category    String   // code, data, api, file, etc.
+  icon        String?
+
+  // Function definition
+  functionName String  @unique
+  parameters  Json     // JSON schema
+  code        String   @db.Text // Actual implementation
+
+  // Gamification
+  tier        String   @default("common") // common, rare, epic, legendary
+  unlockLevel Int      @default(1)
+
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tools")
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system skill
+
+  name        String
+  description String
+  category    String   // coding, writing, analysis, etc.
+  icon        String?
+
+  // Skill tree
+  parentId    String?
+  requirements Json?   // Required skills/level
+
+  // Effects
+  effects     Json     // What this skill enables
+
+  // Gamification
+  tier        String   @default("common")
+  xpCost      Int      @default(100)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      Skill?   @relation("SkillTree", fields: [parentId], references: [id])
+  children    Skill[]  @relation("SkillTree")
+
+  @@map("skills")
+}
+
+model ModelProvider {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system provider
+
+  name        String
+  type        String   // cloud, ollama, docker
+  provider    String   // anthropic, openai, ollama, docker
+
+  // Connection details
+  baseUrl     String?
+  apiKey      String?  // Encrypted
+  containerName String? // For docker providers
+  model       String?  // Default model
+
+  // Configuration
+  config      Json     @default("{}")
+
+  // Available models
+  models      Json     @default("[]") // Array of model configurations
+
+  // Status
+  isActive    Boolean  @default(true)
+  lastChecked DateTime?
+  status      String   @default("unknown") // online, offline, error
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("model_providers")
+}
+
+model AgentConversation {
+  id          String   @id @default(cuid())
+  agentId     String
+  userId      String
+
+  title       String?
+  messages    Json     // Array of messages
+
+  // Execution context
+  sandboxId   String?
+  context     Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sandbox     Sandbox? @relation(fields: [sandboxId], references: [id])
+
+  @@map("agent_conversations")
+}
+
+model Sandbox {
+  id          String   @id @default(cuid())
+  userId      String
+
+  name        String
+  language    String   // python, javascript, typescript, etc.
+
+  // Docker container
+  containerId String?
+  image       String   @default("node:20-alpine")
+  status      String   @default("stopped") // stopped, running, error
+
+  // File system
+  files       Json     @default("{}")
+
+  // Execution history
+  executions  Json     @default("[]")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastRunAt   DateTime?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations AgentConversation[]
+
+  @@map("sandboxes")
+}
