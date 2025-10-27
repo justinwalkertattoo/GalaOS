@@ -1,0 +1,425 @@
+[
+  {
+    "id": "daily-news-digest",
+    "name": "Daily News Digest",
+    "description": "Automatically extract top news articles and save to Notion",
+    "enabled": false,
+    "trigger": "schedule",
+    "schedule": {
+      "interval": 1440,
+      "lastRun": null
+    },
+    "steps": [
+      {
+        "type": "navigate",
+        "url": "https://news.ycombinator.com"
+      },
+      {
+        "type": "wait",
+        "duration": 2000
+      },
+      {
+        "type": "extract",
+        "selector": ".titleline > a",
+        "saveAs": "articles"
+      },
+      {
+        "type": "integration",
+        "integration": "notion",
+        "action": "create_page",
+        "input": {
+          "parent": {
+            "database_id": "YOUR_DATABASE_ID"
+          },
+          "properties": {
+            "Name": {
+              "title": [
+                {
+                  "text": {
+                    "content": "Daily HN Digest - {{date}}"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "github-issue-from-selection",
+    "name": "Create GitHub Issue from Selection",
+    "description": "Create a GitHub issue from selected text on any page",
+    "enabled": false,
+    "trigger": "manual",
+    "steps": [
+      {
+        "type": "extract",
+        "selector": "::selection",
+        "saveAs": "selectedText"
+      },
+      {
+        "type": "integration",
+        "integration": "github",
+        "action": "create_issue",
+        "input": {
+          "owner": "YOUR_GITHUB_USERNAME",
+          "repo": "YOUR_REPO",
+          "title": "Issue from browser",
+          "body": "{{selectedText}}"
+        }
+      }
+    ]
+  },
+  {
+    "id": "form-auto-fill",
+    "name": "Auto-fill Contact Form",
+    "description": "Automatically fill contact forms with saved data",
+    "enabled": false,
+    "trigger": "manual",
+    "steps": [
+      {
+        "type": "fill",
+        "selector": "input[name='name']",
+        "value": "Your Name"
+      },
+      {
+        "type": "fill",
+        "selector": "input[name='email']",
+        "value": "your.email@example.com"
+      },
+      {
+        "type": "fill",
+        "selector": "textarea[name='message']",
+        "value": "This is an automated message from GalaOS"
+      },
+      {
+        "type": "wait",
+        "duration": 1000
+      },
+      {
+        "type": "click",
+        "selector": "button[type='submit']"
+      }
+    ]
+  },
+  {
+    "id": "slack-daily-standup",
+    "name": "Daily Standup to Slack",
+    "description": "Extract productivity stats and post to Slack",
+    "enabled": false,
+    "trigger": "schedule",
+    "schedule": {
+      "interval": 1440,
+      "lastRun": null
+    },
+    "steps": [
+      {
+        "type": "api_call",
+        "endpoint": "https://api.galaos.app/stats/productivity",
+        "method": "GET",
+        "saveAs": "stats"
+      },
+      {
+        "type": "integration",
+        "integration": "slack",
+        "action": "post_message",
+        "input": {
+          "channel": "#standup",
+          "text": "Daily Productivity Report: {{stats}}"
+        }
+      }
+    ]
+  },
+  {
+    "id": "price-monitor",
+    "name": "Price Monitor",
+    "description": "Monitor product price and notify when it drops",
+    "enabled": false,
+    "trigger": "schedule",
+    "schedule": {
+      "interval": 60,
+      "lastRun": null
+    },
+    "steps": [
+      {
+        "type": "navigate",
+        "url": "https://example.com/product"
+      },
+      {
+        "type": "wait",
+        "duration": 3000
+      },
+      {
+        "type": "extract",
+        "selector": ".price",
+        "saveAs": "currentPrice"
+      },
+      {
+        "type": "api_call",
+        "endpoint": "https://api.galaos.app/price-check",
+        "method": "POST",
+        "data": {
+          "product": "example-product",
+          "price": "{{currentPrice}}"
+        }
+      }
+    ]
+  },
+  {
+    "id": "research-assistant",
+    "name": "Research Assistant",
+    "description": "Multi-step research workflow with AI analysis",
+    "enabled": false,
+    "trigger": "manual",
+    "steps": [
+      {
+        "type": "navigate",
+        "url": "https://en.wikipedia.org/wiki/Artificial_intelligence"
+      },
+      {
+        "type": "wait",
+        "duration": 2000
+      },
+      {
+        "type": "extract",
+        "selector": "#mw-content-text p",
+        "saveAs": "content"
+      },
+      {
+        "type": "api_call",
+        "endpoint": "https://api.galaos.app/ai/summarize",
+        "method": "POST",
+        "data": {
+          "text": "{{content}}"
+        },
+        "saveAs": "summary"
+      },
+      {
+        "type": "integration",
+        "integration": "notion",
+        "action": "create_page",
+        "input": {
+          "parent": {
+            "database_id": "YOUR_RESEARCH_DB"
+          },
+          "properties": {
+            "Title": {
+              "title": [
+                {
+                  "text": {
+                    "content": "AI Research Summary"
+                  }
+                }
+              ]
+            }
+          },
+          "children": [
+            {
+              "object": "block",
+              "type": "paragraph",
+              "paragraph": {
+                "rich_text": [
+                  {
+                    "text": {
+                      "content": "{{summary}}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "social-media-scheduler",
+    "name": "Social Media Scheduler",
+    "description": "Post content to multiple social media platforms",
+    "enabled": false,
+    "trigger": "schedule",
+    "schedule": {
+      "interval": 360,
+      "lastRun": null
+    },
+    "steps": [
+      {
+        "type": "api_call",
+        "endpoint": "https://api.galaos.app/content/next",
+        "method": "GET",
+        "saveAs": "post"
+      },
+      {
+        "type": "integration",
+        "integration": "buffer",
+        "action": "create_update",
+        "input": {
+          "profile_ids": ["YOUR_PROFILE_IDS"],
+          "text": "{{post.content}}",
+          "media": {
+            "photo": "{{post.image_url}}"
+          }
+        }
+      },
+      {
+        "type": "wait",
+        "duration": 5000
+      },
+      {
+        "type": "integration",
+        "integration": "slack",
+        "action": "post_message",
+        "input": {
+          "channel": "#marketing",
+          "text": "Posted to social media: {{post.content}}"
+        }
+      }
+    ]
+  },
+  {
+    "id": "email-to-task",
+    "name": "Email to Task Converter",
+    "description": "Convert important emails to tasks in Notion",
+    "enabled": false,
+    "trigger": "manual",
+    "steps": [
+      {
+        "type": "extract",
+        "selector": ".email-subject",
+        "saveAs": "subject"
+      },
+      {
+        "type": "extract",
+        "selector": ".email-body",
+        "saveAs": "body"
+      },
+      {
+        "type": "integration",
+        "integration": "notion",
+        "action": "add_page_to_database",
+        "input": {
+          "database_id": "YOUR_TASKS_DB",
+          "properties": {
+            "Name": {
+              "title": [
+                {
+                  "text": {
+                    "content": "{{subject}}"
+                  }
+                }
+              ]
+            },
+            "Description": {
+              "rich_text": [
+                {
+                  "text": {
+                    "content": "{{body}}"
+                  }
+                }
+              ]
+            },
+            "Status": {
+              "select": {
+                "name": "To Do"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "competitive-analysis",
+    "name": "Competitive Analysis",
+    "description": "Monitor competitor websites for changes",
+    "enabled": false,
+    "trigger": "schedule",
+    "schedule": {
+      "interval": 720,
+      "lastRun": null
+    },
+    "steps": [
+      {
+        "type": "navigate",
+        "url": "https://competitor.com/pricing"
+      },
+      {
+        "type": "wait",
+        "duration": 3000
+      },
+      {
+        "type": "extract",
+        "selector": ".pricing-tier",
+        "saveAs": "pricingData"
+      },
+      {
+        "type": "api_call",
+        "endpoint": "https://api.galaos.app/competitor/update",
+        "method": "POST",
+        "data": {
+          "competitor": "competitor-name",
+          "pricing": "{{pricingData}}"
+        }
+      },
+      {
+        "type": "integration",
+        "integration": "slack",
+        "action": "post_message",
+        "input": {
+          "channel": "#competitive-intel",
+          "text": "Competitor pricing data updated"
+        }
+      }
+    ]
+  },
+  {
+    "id": "content-backup",
+    "name": "Content Backup",
+    "description": "Backup web content to multiple locations",
+    "enabled": false,
+    "trigger": "manual",
+    "steps": [
+      {
+        "type": "extract",
+        "selector": "article",
+        "saveAs": "article"
+      },
+      {
+        "type": "integration",
+        "integration": "notion",
+        "action": "create_page",
+        "input": {
+          "parent": {
+            "database_id": "YOUR_ARCHIVE_DB"
+          },
+          "properties": {
+            "Title": {
+              "title": [
+                {
+                  "text": {
+                    "content": "{{document.title}}"
+                  }
+                }
+              ]
+            },
+            "URL": {
+              "url": "{{document.location.href}}"
+            }
+          }
+        }
+      },
+      {
+        "type": "integration",
+        "integration": "github",
+        "action": "create_file",
+        "input": {
+          "owner": "YOUR_USERNAME",
+          "repo": "content-archive",
+          "path": "articles/{{date}}.md",
+          "content": "{{article}}"
+        }
+      }
+    ]
+  }
+]

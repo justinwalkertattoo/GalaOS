@@ -121,39 +121,201 @@ Direct access to all 40+ GalaOS integrations:
 ### Advanced Features
 
 #### Create Custom Workflows
+
+Workflows are multi-step automation sequences that can be triggered manually or on a schedule. Each workflow consists of a series of steps that execute in order.
+
+##### Workflow Structure
+
 ```javascript
 {
-  name: "Save to Notion Daily",
-  schedule: { interval: 1440 }, // Run daily
+  id: "unique-workflow-id",
+  name: "Workflow Name",
+  description: "What this workflow does",
+  enabled: true,
+  trigger: "schedule" | "manual",
+  schedule: {
+    interval: 1440, // Minutes (1440 = daily)
+    lastRun: null
+  },
   steps: [
-    { type: "navigate", url: "https://news.site.com" },
-    { type: "extract", selector: ".article" },
+    // Array of workflow steps
+  ]
+}
+```
+
+##### Available Step Types
+
+**1. Navigate** - Navigate to a URL
+```javascript
+{
+  type: "navigate",
+  url: "https://example.com"
+}
+```
+
+**2. Extract** - Extract data from page
+```javascript
+{
+  type: "extract",
+  selector: ".article-title", // CSS selector
+  saveAs: "titles" // Save for later use
+}
+```
+
+**3. Click** - Click an element
+```javascript
+{
+  type: "click",
+  selector: "button.submit"
+}
+```
+
+**4. Fill** - Fill an input field
+```javascript
+{
+  type: "fill",
+  selector: "input[name='email']",
+  value: "your.email@example.com"
+}
+```
+
+**5. Wait** - Wait for duration
+```javascript
+{
+  type: "wait",
+  duration: 2000 // Milliseconds
+}
+```
+
+**6. API Call** - Make HTTP request
+```javascript
+{
+  type: "api_call",
+  endpoint: "https://api.example.com/data",
+  method: "POST",
+  data: {
+    key: "value"
+  },
+  saveAs: "apiResponse"
+}
+```
+
+**7. Integration** - Call integration action
+```javascript
+{
+  type: "integration",
+  integration: "notion",
+  action: "create_page",
+  input: {
+    parent: { database_id: "YOUR_DB_ID" },
+    properties: {
+      Name: {
+        title: [{ text: { content: "Page Title" } }]
+      }
+    }
+  }
+}
+```
+
+##### Example Workflows
+
+**Daily News Digest**
+```javascript
+{
+  id: "daily-news",
+  name: "Daily News Digest",
+  description: "Extract top HN articles and save to Notion",
+  enabled: true,
+  trigger: "schedule",
+  schedule: { interval: 1440 },
+  steps: [
+    { type: "navigate", url: "https://news.ycombinator.com" },
+    { type: "wait", duration: 2000 },
+    { type: "extract", selector: ".titleline > a", saveAs: "articles" },
     {
       type: "integration",
       integration: "notion",
       action: "create_page",
-      params: {
-        parentId: "your-notion-page-id",
-        title: "Daily News Digest",
-        content: "{{extracted_content}}"
+      input: {
+        parent: { database_id: "YOUR_DB_ID" },
+        properties: {
+          Name: { title: [{ text: { content: "HN Digest" } }] }
+        }
       }
     }
   ]
 }
 ```
 
-#### Use with Integrations
+**Form Auto-fill**
 ```javascript
-// Send selected text to Slack
+{
+  id: "auto-fill",
+  name: "Auto-fill Contact Form",
+  trigger: "manual",
+  steps: [
+    { type: "fill", selector: "input[name='name']", value: "John Doe" },
+    { type: "fill", selector: "input[name='email']", value: "john@example.com" },
+    { type: "fill", selector: "textarea", value: "Message text" },
+    { type: "wait", duration: 1000 },
+    { type: "click", selector: "button[type='submit']" }
+  ]
+}
+```
+
+**Price Monitor**
+```javascript
+{
+  id: "price-monitor",
+  name: "Monitor Product Price",
+  trigger: "schedule",
+  schedule: { interval: 60 }, // Every hour
+  steps: [
+    { type: "navigate", url: "https://shop.example.com/product" },
+    { type: "wait", duration: 3000 },
+    { type: "extract", selector: ".price", saveAs: "price" },
+    {
+      type: "api_call",
+      endpoint: "https://api.galaos.app/price-check",
+      method: "POST",
+      data: { product: "example", price: "{{price}}" }
+    }
+  ]
+}
+```
+
+See [workflows-examples.json](./workflows-examples.json) for 10 complete workflow examples including:
+- Daily news aggregation
+- GitHub issue creation
+- Slack standup automation
+- Content backup
+- Competitive analysis
+- Research assistant
+- Social media scheduling
+
+#### Use with Integrations
+
+**Send selected text to Slack**
+```
 1. Select text on any page
 2. Right-click → GalaOS AI Agent → Send to Slack
 3. Choose channel
 4. Message posted!
+```
 
-// Create GitHub Issue from Selection
+**Create GitHub Issue from Selection**
+```
 1. Select bug description
 2. Right-click → GalaOS AI Agent → Create GitHub Issue
 3. Issue created with selected text
+```
+
+**Save to Notion**
+```
+1. Navigate to any article
+2. Click GalaOS icon
+3. Click "Send to Notion"
+4. Content saved to your database
 ```
 
 ## Architecture
