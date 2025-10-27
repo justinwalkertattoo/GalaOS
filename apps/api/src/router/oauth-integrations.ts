@@ -1,16 +1,16 @@
 import { router, protectedProcedure, publicProcedure } from '../trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { OAuthIntegrationManager } from '@galaos/core/src/oauth-integration-manager';
+import { EnhancedOAuthIntegrationManager } from '@galaos/core/src/oauth-integration-manager-enhanced';
 import { BrowserIntegration, TOS_WARNING } from '@galaos/core/src/browser-integration';
 
 // Singleton instances
-let oauthManager: OAuthIntegrationManager;
+let oauthManager: EnhancedOAuthIntegrationManager;
 let browserIntegration: BrowserIntegration;
 
 function getManagers() {
   if (!oauthManager) {
-    oauthManager = new OAuthIntegrationManager();
+    oauthManager = new EnhancedOAuthIntegrationManager();
   }
   if (!browserIntegration) {
     browserIntegration = new BrowserIntegration();

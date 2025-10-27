@@ -4,4 +4,5 @@ export * from './update-scheduler';
 export * from './code-generator';
 export * from './file-watcher';
 export * from './oauth-integration-manager';
+export * from './oauth-integration-manager-enhanced';
 export * from './browser-integration';
