@@ -8,6 +8,7 @@ import { orchestrationRouter } from './orchestration';
 import { inboxRouter } from './inbox';
 import { inboxEnhancedRouter } from './inbox-enhanced';
 import { artTrainingRouter } from './art-training';
+import { systemUpdatesRouter } from './system-updates';
 import { settingsRouter } from './settings';
 import { agentsRouter } from './agents';
 import { modelsRouter } from './models';
@@ -25,6 +26,7 @@ export const appRouter = router({
   inbox: inboxRouter,
   inboxEnhanced: inboxEnhancedRouter,
   artTraining: artTrainingRouter,
+  systemUpdates: systemUpdatesRouter,
   settings: settingsRouter,
   agents: agentsRouter,
   models: modelsRouter,
