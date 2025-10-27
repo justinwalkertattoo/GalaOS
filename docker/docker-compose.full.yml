@@ -1,0 +1,528 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASES
+  # ============================================================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: galaos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: galaos
+      POSTGRES_USER: galaos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-galaos_secure_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - galaos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U galaos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: galaos-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - galaos-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secure_password}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: galaos-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - galaos-network
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: galaos-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - galaos-network
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-neo4j_secure_password}
+      NEO4J_dbms_memory_pagecache_size: 1G
+      NEO4J_dbms_memory_heap_max__size: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD:-neo4j_secure_password} 'RETURN 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================================================
+  # AI/ML SERVICES
+  # ============================================================================
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: galaos-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - galaos-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  pytorch-serve:
+    image: pytorch/torchserve:latest-gpu
+    container_name: galaos-pytorch
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # Inference API
+      - "8081:8081"  # Management API
+      - "8082:8082"  # Metrics API
+    volumes:
+      - pytorch_models:/home/model-server/model-store
+      - ./torchserve-config:/home/model-server/config
+    networks:
+      - galaos-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      TS_MODEL_STORE: /home/model-server/model-store
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  tensorflow-serving:
+    image: tensorflow/serving:latest-gpu
+    container_name: galaos-tensorflow
+    restart: unless-stopped
+    ports:
+      - "8501:8501"  # REST API
+      - "8500:8500"  # gRPC API
+    volumes:
+      - tensorflow_models:/models
+    networks:
+      - galaos-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      MODEL_NAME: art_style_model
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/v1/models/art_style_model"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
+    container_name: galaos-whisper
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    networks:
+      - galaos-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      ASR_MODEL: medium
+      ASR_ENGINE: faster_whisper
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # MESSAGE QUEUE & PROCESSING
+  # ============================================================================
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: galaos-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - galaos-network
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-galaos}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq_secure_password}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================================================
+  # STORAGE
+  # ============================================================================
+
+  minio:
+    image: minio/minio:latest
+    container_name: galaos-minio
+    restart: unless-stopped
+    ports:
+      - "9001:9001"  # Console
+      - "9002:9000"  # API
+    volumes:
+      - minio_data:/data
+    networks:
+      - galaos-network
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-galaos}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_secure_password}
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # MEDIA PROCESSING
+  # ============================================================================
+
+  ffmpeg:
+    build:
+      context: ./services/ffmpeg
+      dockerfile: Dockerfile
+    container_name: galaos-ffmpeg
+    restart: unless-stopped
+    volumes:
+      - media_processing:/workspace
+    networks:
+      - galaos-network
+    command: tail -f /dev/null  # Keep container running
+
+  tesseract:
+    image: tesseractshadow/tesseract4re:latest
+    container_name: galaos-tesseract
+    restart: unless-stopped
+    volumes:
+      - ocr_processing:/workspace
+    networks:
+      - galaos-network
+    command: tail -f /dev/null
+
+  # ============================================================================
+  # SEARCH & INDEXING
+  # ============================================================================
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: galaos-elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - galaos-network
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================================================
+  # MONITORING & OBSERVABILITY
+  # ============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: galaos-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - galaos-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: galaos-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana-datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - galaos-network
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-grafana_secure_password}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: galaos-langfuse
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    networks:
+      - galaos-network
+    environment:
+      DATABASE_URL: postgresql://galaos:${POSTGRES_PASSWORD:-galaos_secure_password}@postgres:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3002
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-langfuse_secret_key_change_me}
+      SALT: ${LANGFUSE_SALT:-langfuse_salt_change_me}
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # WEB SERVICES
+  # ============================================================================
+
+  browserless:
+    image: browserless/chrome:latest
+    container_name: galaos-browserless
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    networks:
+      - galaos-network
+    environment:
+      TOKEN: ${BROWSERLESS_TOKEN:-browserless_secure_token}
+      MAX_CONCURRENT_SESSIONS: 5
+      CONNECTION_TIMEOUT: 60000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # CONTAINER MANAGEMENT
+  # ============================================================================
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: galaos-portainer
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - galaos-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9443/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # GALAOS SERVICES
+  # ============================================================================
+
+  galaos-api:
+    build:
+      context: ../
+      dockerfile: ./apps/api/Dockerfile
+    container_name: galaos-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ../apps/api:/app/apps/api
+      - ../packages:/app/packages
+    networks:
+      - galaos-network
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://galaos:${POSTGRES_PASSWORD:-galaos_secure_password}@postgres:5432/galaos
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secure_password}@redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-galaos}:${RABBITMQ_PASSWORD:-rabbitmq_secure_password}@rabbitmq:5672
+      QDRANT_URL: http://qdrant:6333
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-neo4j_secure_password}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-galaos}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio_secure_password}
+      OLLAMA_URL: http://ollama:11434
+      PYTORCH_URL: http://pytorch-serve:8080
+      TENSORFLOW_URL: http://tensorflow-serving:8501
+      WHISPER_URL: http://whisper:9000
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      BROWSERLESS_URL: http://browserless:3000
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+      - rabbitmq
+      - minio
+      - ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  galaos-web:
+    build:
+      context: ../
+      dockerfile: ./apps/web/Dockerfile
+    container_name: galaos-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../apps/web:/app/apps/web
+    networks:
+      - galaos-network
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    depends_on:
+      - galaos-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================================================
+  # WORKER SERVICES
+  # ============================================================================
+
+  galaos-worker:
+    build:
+      context: ../
+      dockerfile: ./apps/worker/Dockerfile
+    container_name: galaos-worker
+    restart: unless-stopped
+    volumes:
+      - ../apps/worker:/app/apps/worker
+      - ../packages:/app/packages
+    networks:
+      - galaos-network
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://galaos:${POSTGRES_PASSWORD:-galaos_secure_password}@postgres:5432/galaos
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secure_password}@redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-galaos}:${RABBITMQ_PASSWORD:-rabbitmq_secure_password}@rabbitmq:5672
+      WHISPER_URL: http://whisper:9000
+      PYTORCH_URL: http://pytorch-serve:8080
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - whisper
+
+networks:
+  galaos-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  neo4j_data:
+  neo4j_logs:
+  ollama_data:
+  pytorch_models:
+  tensorflow_models:
+  rabbitmq_data:
+  minio_data:
+  media_processing:
+  ocr_processing:
+  elasticsearch_data:
+  prometheus_data:
+  grafana_data:
+  portainer_data:
