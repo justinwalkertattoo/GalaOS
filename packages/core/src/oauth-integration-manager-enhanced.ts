@@ -4,7 +4,7 @@ import axios from 'axios';
 export interface OAuthProvider {
   id: string;
   name: string;
-  category: 'ai' | 'productivity' | 'social' | 'communication' | 'development' | 'storage' | 'analytics' | 'commerce';
+  category: 'ai' | 'productivity' | 'social' | 'communication' | 'development' | 'storage' | 'analytics' | 'commerce' | 'creative' | 'finance';
   type: 'oauth2' | 'api_key' | 'browser_automation';
   authUrl?: string;
   tokenUrl?: string;
@@ -519,6 +519,96 @@ export class OAuthIntegrationManager {
       authUrl: 'https://login.salesforce.com/services/oauth2/authorize',
       tokenUrl: 'https://login.salesforce.com/services/oauth2/token',
       scopes: ['api', 'refresh_token'],
+    });
+
+    this.providers.set('squarespace', {
+      id: 'squarespace',
+      name: 'Squarespace',
+      category: 'commerce',
+      type: 'oauth2',
+      status: 'available',
+      description: 'Website builder with e-commerce capabilities',
+      icon: '⬛',
+      agentCapable: true,
+      authUrl: 'https://login.squarespace.com/api/1/login/oauth/provider/authorize',
+      tokenUrl: 'https://login.squarespace.com/api/1/login/oauth/provider/tokens',
+      scopes: ['website.inventory', 'website.orders', 'website.products', 'website.commerce'],
+    });
+
+    this.providers.set('mailchimp', {
+      id: 'mailchimp',
+      name: 'Mailchimp',
+      category: 'communication',
+      type: 'oauth2',
+      status: 'available',
+      description: 'Email marketing automation and audience management',
+      icon: '📬',
+      agentCapable: true,
+      authUrl: 'https://login.mailchimp.com/oauth2/authorize',
+      tokenUrl: 'https://login.mailchimp.com/oauth2/token',
+      scopes: [],
+    });
+
+    // ========================================
+    // CREATIVE & DESIGN
+    // ========================================
+
+    this.providers.set('canva', {
+      id: 'canva',
+      name: 'Canva',
+      category: 'creative',
+      type: 'oauth2',
+      status: 'available',
+      description: 'Create and manage designs programmatically',
+      icon: '🎨',
+      agentCapable: true,
+      authUrl: 'https://www.canva.com/api/oauth/authorize',
+      tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
+      scopes: ['design:content:read', 'design:content:write', 'design:meta:read', 'asset:read', 'asset:write'],
+    });
+
+    this.providers.set('adobe', {
+      id: 'adobe',
+      name: 'Adobe Creative Cloud',
+      category: 'creative',
+      type: 'oauth2',
+      status: 'available',
+      description: 'Access Adobe Stock, Lightroom, and Creative Cloud assets',
+      icon: '🔺',
+      agentCapable: true,
+      authUrl: 'https://ims-na1.adobelogin.com/ims/authorize/v2',
+      tokenUrl: 'https://ims-na1.adobelogin.com/ims/token/v3',
+      scopes: ['openid', 'creative_sdk', 'AdobeID'],
+    });
+
+    this.providers.set('capcut', {
+      id: 'capcut',
+      name: 'CapCut',
+      category: 'creative',
+      type: 'browser_automation',
+      status: 'experimental',
+      description: 'Video editing automation (No public API - browser automation)',
+      icon: '🎬',
+      agentCapable: false,
+      requiresBrowser: true,
+    });
+
+    // ========================================
+    // FINANCE & TRADING
+    // ========================================
+
+    this.providers.set('robinhood', {
+      id: 'robinhood',
+      name: 'Robinhood',
+      category: 'finance',
+      type: 'oauth2',
+      status: 'available',
+      description: 'Stock trading and portfolio monitoring (READ-ONLY for safety)',
+      icon: '📈',
+      agentCapable: true,
+      authUrl: 'https://robinhood.com/oauth2/authorize',
+      tokenUrl: 'https://api.robinhood.com/oauth2/token',
+      scopes: ['read'],
     });
   }
 
