@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GalaOS AI Agent</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup-container">
+      <!-- Header -->
+      <div class="popup-header">
+        <div class="popup-logo">
+          <span class="logo-icon">🌌</span>
+          <span class="logo-text">GalaOS</span>
+        </div>
+        <div class="popup-status" id="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Disconnected</span>
+        </div>
+      </div>
+
+      <!-- Not Authenticated View -->
+      <div id="auth-view" class="view">
+        <div class="auth-content">
+          <h2>Connect to GalaOS</h2>
+          <p>Enter your GalaOS API key to get started</p>
+          <input
+            type="password"
+            id="api-key-input"
+            placeholder="sk-galaos-..."
+            class="input-field"
+          />
+          <button id="connect-btn" class="btn btn-primary">Connect</button>
+          <p class="help-text">
+            Don't have an API key?
+            <a href="https://galaos.app/settings/api" target="_blank">Get one here</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Main View -->
+      <div id="main-view" class="view hidden">
+        <!-- Quick Actions -->
+        <div class="section">
+          <h3 class="section-title">Quick Actions</h3>
+          <div class="actions-grid">
+            <button class="action-card" data-action="analyze">
+              <span class="action-icon">📊</span>
+              <span class="action-label">Analyze Page</span>
+            </button>
+            <button class="action-card" data-action="summarize">
+              <span class="action-icon">📝</span>
+              <span class="action-label">Summarize</span>
+            </button>
+            <button class="action-card" data-action="extract">
+              <span class="action-icon">🔍</span>
+              <span class="action-label">Extract Data</span>
+            </button>
+            <button class="action-card" data-action="chat">
+              <span class="action-icon">💬</span>
+              <span class="action-label">Chat</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Integrations -->
+        <div class="section">
+          <h3 class="section-title">Integrations</h3>
+          <div class="integrations-list" id="integrations-list">
+            <div class="loading">Loading integrations...</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section">
+          <h3 class="section-title">Recent Activity</h3>
+          <div class="activity-list" id="activity-list">
+            <div class="empty-state">No recent activity</div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="section">
+          <button class="btn btn-secondary btn-full" id="settings-btn">
+            ⚙️ Settings
+          </button>
+          <button class="btn btn-danger btn-full" id="disconnect-btn">
+            🔌 Disconnect
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

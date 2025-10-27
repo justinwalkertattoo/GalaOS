@@ -1,0 +1,466 @@
+/**
+ * GalaOS Browser Extension - Content Script Styles
+ */
+
+/* Floating Action Button */
+.galaos-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  z-index: 999999;
+  color: white;
+}
+
+.galaos-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+}
+
+.galaos-fab:active {
+  transform: scale(0.95);
+}
+
+/* Main Panel */
+.galaos-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  z-index: 999998;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    sans-serif;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Panel Header */
+.galaos-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.galaos-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.galaos-logo {
+  font-size: 24px;
+}
+
+.galaos-panel-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 24px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.galaos-panel-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Panel Body */
+.galaos-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tabs */
+.galaos-tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+}
+
+.galaos-tab {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.galaos-tab:hover {
+  background: rgba(102, 126, 234, 0.05);
+  color: #667eea;
+}
+
+.galaos-tab.active {
+  color: #667eea;
+  background: white;
+}
+
+.galaos-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #667eea;
+}
+
+/* Tab Content */
+.galaos-tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.galaos-tab-content.hidden {
+  display: none;
+}
+
+/* Chat Tab */
+.galaos-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.galaos-message {
+  display: flex;
+  gap: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.galaos-message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.galaos-message-user .galaos-message-avatar {
+  background: #e3f2fd;
+}
+
+.galaos-message-assistant .galaos-message-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.galaos-message-content {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.galaos-message-user .galaos-message-content {
+  background: #667eea;
+  color: white;
+}
+
+.galaos-chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+  background: white;
+}
+
+.galaos-chat-input input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.galaos-chat-input input:focus {
+  border-color: #667eea;
+}
+
+.galaos-chat-input button {
+  padding: 12px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.galaos-chat-input button:hover {
+  background: #5568d3;
+}
+
+/* Actions Tab */
+.galaos-actions {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.galaos-action-btn {
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.galaos-action-btn:hover {
+  border-color: #667eea;
+  background: #f5f7ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.galaos-action-btn:active {
+  transform: translateY(0);
+}
+
+/* Results */
+.galaos-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.galaos-result-text {
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.galaos-result-json {
+  padding: 16px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.galaos-copy-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.galaos-copy-btn:hover {
+  background: #5568d3;
+}
+
+.galaos-loading {
+  padding: 32px;
+  text-align: center;
+  color: #666;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.galaos-error {
+  padding: 16px;
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 8px;
+  border-left: 4px solid #c62828;
+}
+
+.galaos-empty {
+  padding: 32px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
+/* Workflows Tab */
+.galaos-workflows-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.galaos-workflow-item {
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.galaos-workflow-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.galaos-workflow-name {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.galaos-workflow-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.galaos-workflow-run {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.galaos-workflow-run:hover {
+  background: #5568d3;
+}
+
+/* Highlight Effect */
+.galaos-highlight {
+  outline: 3px solid #667eea !important;
+  outline-offset: 2px;
+  background: rgba(102, 126, 234, 0.1) !important;
+  animation: highlightPulse 1s ease-in-out 3;
+}
+
+@keyframes highlightPulse {
+  0%,
+  100% {
+    outline-color: #667eea;
+  }
+  50% {
+    outline-color: #764ba2;
+  }
+}
+
+/* Scrollbar Styling */
+.galaos-panel ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.galaos-panel ::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.galaos-panel ::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.galaos-panel ::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .galaos-panel {
+    width: 100%;
+  }
+
+  .galaos-fab {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .galaos-actions {
+    grid-template-columns: 1fr;
+  }
+}
