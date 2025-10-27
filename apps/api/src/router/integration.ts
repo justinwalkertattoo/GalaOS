@@ -8,6 +8,13 @@ import {
   SlackIntegration,
   GitHubIntegration,
   GmailIntegration,
+  SquarespaceIntegration,
+  MailchimpIntegration,
+  NotionIntegration,
+  CanvaIntegration,
+  AdobeIntegration,
+  RobinhoodIntegration,
+  CapCutIntegration,
   bufferCreatePostAction,
   bufferGetProfilesAction,
   slackPostMessageAction,
@@ -23,6 +30,41 @@ import {
   gmailGetMessageAction,
   gmailCreateDraftAction,
   gmailAddLabelAction,
+  squarespaceListProductsAction,
+  squarespaceGetProductAction,
+  squarespaceListOrdersAction,
+  squarespaceUpdateInventoryAction,
+  mailchimpListAudiencesAction,
+  mailchimpAddSubscriberAction,
+  mailchimpCreateCampaignAction,
+  mailchimpSetCampaignContentAction,
+  mailchimpSendCampaignAction,
+  notionSearchAction,
+  notionCreatePageAction,
+  notionCreateDatabaseAction,
+  notionQueryDatabaseAction,
+  notionAddPageToDatabaseAction,
+  notionAppendBlockChildrenAction,
+  canvaCreateDesignAction,
+  canvaGetDesignAction,
+  canvaListDesignsAction,
+  canvaExportDesignAction,
+  canvaUploadAssetAction,
+  canvaCreateFolderAction,
+  adobeSearchStockAction,
+  adobeLicenseStockAction,
+  adobeListLibrariesAction,
+  adobeGetLibraryElementsAction,
+  adobeCreateLibraryElementAction,
+  robinhoodGetPortfolioAction,
+  robinhoodGetPositionsAction,
+  robinhoodGetOrdersAction,
+  robinhoodSearchInstrumentsAction,
+  robinhoodGetQuoteAction,
+  robinhoodGetHistoricalsAction,
+  capcutUploadVideoAction,
+  capcutListProjectsAction,
+  capcutExportVideoAction,
 } from '@galaos/integrations';
 import { EnhancedOAuthIntegrationManager } from '@galaos/core';
 
@@ -31,12 +73,26 @@ const bufferIntegration = new BufferIntegration();
 const slackIntegration = new SlackIntegration();
 const githubIntegration = new GitHubIntegration();
 const gmailIntegration = new GmailIntegration();
+const squarespaceIntegration = new SquarespaceIntegration();
+const mailchimpIntegration = new MailchimpIntegration();
+const notionIntegration = new NotionIntegration();
+const canvaIntegration = new CanvaIntegration();
+const adobeIntegration = new AdobeIntegration();
+const robinhoodIntegration = new RobinhoodIntegration();
+const capcutIntegration = new CapCutIntegration();
 
 // Register integrations
 globalIntegrationRegistry.register(bufferIntegration);
 globalIntegrationRegistry.register(slackIntegration);
 globalIntegrationRegistry.register(githubIntegration);
 globalIntegrationRegistry.register(gmailIntegration);
+globalIntegrationRegistry.register(squarespaceIntegration);
+globalIntegrationRegistry.register(mailchimpIntegration);
+globalIntegrationRegistry.register(notionIntegration);
+globalIntegrationRegistry.register(canvaIntegration);
+globalIntegrationRegistry.register(adobeIntegration);
+globalIntegrationRegistry.register(robinhoodIntegration);
+globalIntegrationRegistry.register(capcutIntegration);
 
 // Register Buffer actions
 globalIntegrationRegistry.registerAction('buffer', bufferCreatePostAction);
@@ -60,6 +116,55 @@ globalIntegrationRegistry.registerAction('gmail', gmailListMessagesAction);
 globalIntegrationRegistry.registerAction('gmail', gmailGetMessageAction);
 globalIntegrationRegistry.registerAction('gmail', gmailCreateDraftAction);
 globalIntegrationRegistry.registerAction('gmail', gmailAddLabelAction);
+
+// Register Squarespace actions
+globalIntegrationRegistry.registerAction('squarespace', squarespaceListProductsAction);
+globalIntegrationRegistry.registerAction('squarespace', squarespaceGetProductAction);
+globalIntegrationRegistry.registerAction('squarespace', squarespaceListOrdersAction);
+globalIntegrationRegistry.registerAction('squarespace', squarespaceUpdateInventoryAction);
+
+// Register Mailchimp actions
+globalIntegrationRegistry.registerAction('mailchimp', mailchimpListAudiencesAction);
+globalIntegrationRegistry.registerAction('mailchimp', mailchimpAddSubscriberAction);
+globalIntegrationRegistry.registerAction('mailchimp', mailchimpCreateCampaignAction);
+globalIntegrationRegistry.registerAction('mailchimp', mailchimpSetCampaignContentAction);
+globalIntegrationRegistry.registerAction('mailchimp', mailchimpSendCampaignAction);
+
+// Register Notion actions
+globalIntegrationRegistry.registerAction('notion', notionSearchAction);
+globalIntegrationRegistry.registerAction('notion', notionCreatePageAction);
+globalIntegrationRegistry.registerAction('notion', notionCreateDatabaseAction);
+globalIntegrationRegistry.registerAction('notion', notionQueryDatabaseAction);
+globalIntegrationRegistry.registerAction('notion', notionAddPageToDatabaseAction);
+globalIntegrationRegistry.registerAction('notion', notionAppendBlockChildrenAction);
+
+// Register Canva actions
+globalIntegrationRegistry.registerAction('canva', canvaCreateDesignAction);
+globalIntegrationRegistry.registerAction('canva', canvaGetDesignAction);
+globalIntegrationRegistry.registerAction('canva', canvaListDesignsAction);
+globalIntegrationRegistry.registerAction('canva', canvaExportDesignAction);
+globalIntegrationRegistry.registerAction('canva', canvaUploadAssetAction);
+globalIntegrationRegistry.registerAction('canva', canvaCreateFolderAction);
+
+// Register Adobe actions
+globalIntegrationRegistry.registerAction('adobe', adobeSearchStockAction);
+globalIntegrationRegistry.registerAction('adobe', adobeLicenseStockAction);
+globalIntegrationRegistry.registerAction('adobe', adobeListLibrariesAction);
+globalIntegrationRegistry.registerAction('adobe', adobeGetLibraryElementsAction);
+globalIntegrationRegistry.registerAction('adobe', adobeCreateLibraryElementAction);
+
+// Register Robinhood actions (READ-ONLY for safety)
+globalIntegrationRegistry.registerAction('robinhood', robinhoodGetPortfolioAction);
+globalIntegrationRegistry.registerAction('robinhood', robinhoodGetPositionsAction);
+globalIntegrationRegistry.registerAction('robinhood', robinhoodGetOrdersAction);
+globalIntegrationRegistry.registerAction('robinhood', robinhoodSearchInstrumentsAction);
+globalIntegrationRegistry.registerAction('robinhood', robinhoodGetQuoteAction);
+globalIntegrationRegistry.registerAction('robinhood', robinhoodGetHistoricalsAction);
+
+// Register CapCut actions (Experimental/Placeholder)
+globalIntegrationRegistry.registerAction('capcut', capcutUploadVideoAction);
+globalIntegrationRegistry.registerAction('capcut', capcutListProjectsAction);
+globalIntegrationRegistry.registerAction('capcut', capcutExportVideoAction);
 
 // OAuth manager singleton
 let oauthManager: EnhancedOAuthIntegrationManager;
@@ -286,6 +391,7 @@ function getCategoryForProvider(providerId: string): string {
     'discord': 'communication',
     'telegram': 'communication',
     'twilio': 'communication',
+    'mailchimp': 'communication',
     'github': 'development',
     'gitlab': 'development',
     'vercel': 'development',
@@ -306,6 +412,11 @@ function getCategoryForProvider(providerId: string): string {
     'shopify': 'commerce',
     'hubspot': 'commerce',
     'salesforce': 'commerce',
+    'squarespace': 'commerce',
+    'canva': 'creative',
+    'adobe': 'creative',
+    'capcut': 'creative',
+    'robinhood': 'finance',
   };
 
   return categories[providerId] || 'other';
