@@ -10,6 +10,7 @@ import { inboxEnhancedRouter } from './inbox-enhanced';
 import { artTrainingRouter } from './art-training';
 import { systemUpdatesRouter } from './system-updates';
 import { selfCodingRouter } from './self-coding';
+import { oauthIntegrationsRouter } from './oauth-integrations';
 import { settingsRouter } from './settings';
 import { agentsRouter } from './agents';
 import { modelsRouter } from './models';
@@ -29,6 +30,7 @@ export const appRouter = router({
   artTraining: artTrainingRouter,
   systemUpdates: systemUpdatesRouter,
   selfCoding: selfCodingRouter,
+  oauthIntegrations: oauthIntegrationsRouter,
   settings: settingsRouter,
   agents: agentsRouter,
   models: modelsRouter,
