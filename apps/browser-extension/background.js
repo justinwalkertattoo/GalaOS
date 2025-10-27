@@ -778,6 +778,162 @@ async function executeWorkflowStep(step) {
   }
 }
 
+/**
+ * Workflow Helper Functions
+ */
+
+/**
+ * Navigate to a URL
+ */
+async function navigateToUrl(url) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  await chrome.tabs.update(tab.id, { url });
+
+  // Wait for page to load
+  return new Promise((resolve) => {
+    const listener = (tabId, changeInfo) => {
+      if (tabId === tab.id && changeInfo.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+}
+
+/**
+ * Extract data using a selector
+ */
+async function extractData(selector) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  const results = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: (sel) => {
+      const elements = document.querySelectorAll(sel);
+      return Array.from(elements).map((el) => ({
+        text: el.textContent?.trim(),
+        html: el.innerHTML,
+        value: el.value || null,
+        href: el.href || null,
+        src: el.src || null,
+      }));
+    },
+    args: [selector],
+  });
+
+  return results[0]?.result || [];
+}
+
+/**
+ * Click an element
+ */
+async function clickElement(selector) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: (sel) => {
+      const element = document.querySelector(sel);
+      if (!element) {
+        throw new Error(`Element not found: ${sel}`);
+      }
+      element.click();
+    },
+    args: [selector],
+  });
+}
+
+/**
+ * Fill input field
+ */
+async function fillInput(selector, value) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: (sel, val) => {
+      const element = document.querySelector(sel);
+      if (!element) {
+        throw new Error(`Element not found: ${sel}`);
+      }
+
+      // Set value
+      element.value = val;
+
+      // Trigger input events
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    },
+    args: [selector, value],
+  });
+}
+
+/**
+ * Wait for a duration
+ */
+async function wait(duration) {
+  return new Promise((resolve) => setTimeout(resolve, duration));
+}
+
+/**
+ * Make API call
+ */
+async function makeApiCall(endpoint, method = 'GET', data = null) {
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+
+  if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+    options.body = JSON.stringify(data);
+  }
+
+  const response = await fetch(endpoint, options);
+
+  if (!response.ok) {
+    throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json();
+  }
+
+  return await response.text();
+}
+
+/**
+ * Call integration action
+ */
+async function callIntegration(integration, action, input) {
+  if (!extensionState.apiKey) {
+    throw new Error('Not authenticated. Please set API key.');
+  }
+
+  const response = await fetch(`${GALAOS_API_URL}/integration/execute`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${extensionState.apiKey}`,
+    },
+    body: JSON.stringify({
+      integration,
+      action,
+      input,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Integration call failed: ${error.message || response.statusText}`);
+  }
+
+  return await response.json();
+}
+
 // Message handling
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('[GalaOS] Message received:', message.type);
@@ -810,6 +966,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       extensionState.activeWorkflows.push(message.workflow);
       chrome.storage.local.set({ workflows: extensionState.activeWorkflows });
       sendResponse({ success: true });
+      break;
+
+    case 'GET_WORKFLOWS':
+      sendResponse(extensionState.activeWorkflows);
+      break;
+
+    case 'RUN_WORKFLOW':
+      const workflow = extensionState.activeWorkflows.find((w) => w.id === message.workflowId);
+      if (workflow) {
+        executeWorkflow(workflow)
+          .then(() => sendResponse({ success: true }))
+          .catch((error) => sendResponse({ success: false, error: error.message }));
+      } else {
+        sendResponse({ success: false, error: 'Workflow not found' });
+      }
+      return true; // Will respond asynchronously
+
+    case 'DELETE_WORKFLOW':
+      extensionState.activeWorkflows = extensionState.activeWorkflows.filter(
+        (w) => w.id !== message.workflowId
+      );
+      chrome.storage.local.set({ workflows: extensionState.activeWorkflows });
+      sendResponse({ success: true });
+      break;
+
+    case 'GET_ACTIVITY':
+      // Return recent agent activity from memory
+      sendResponse(
+        extensionState.agentMemory.slice(-10).map((item) => ({
+          title: item.action || 'Activity',
+          timestamp: item.timestamp || Date.now(),
+        }))
+      );
       break;
   }
 });
