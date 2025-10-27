@@ -6,6 +6,8 @@ import { aiRouter } from './ai';
 import { integrationRouter } from './integration';
 import { orchestrationRouter } from './orchestration';
 import { inboxRouter } from './inbox';
+import { inboxEnhancedRouter } from './inbox-enhanced';
+import { artTrainingRouter } from './art-training';
 import { settingsRouter } from './settings';
 import { agentsRouter } from './agents';
 import { modelsRouter } from './models';
@@ -21,6 +23,8 @@ export const appRouter = router({
   integration: integrationRouter,
   orchestration: orchestrationRouter,
   inbox: inboxRouter,
+  inboxEnhanced: inboxEnhancedRouter,
+  artTraining: artTrainingRouter,
   settings: settingsRouter,
   agents: agentsRouter,
   models: modelsRouter,
