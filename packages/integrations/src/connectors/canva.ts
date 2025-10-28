@@ -72,7 +72,7 @@ export class CanvaIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Canva API error: ${error.message || response.statusText}`);
     }
 
@@ -155,7 +155,7 @@ export class CanvaIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Canva API error: ${error.message || response.statusText}`);
     }
 
@@ -184,7 +184,7 @@ export class CanvaIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Canva API error: ${error.message || response.statusText}`);
     }
 
@@ -208,7 +208,7 @@ export class CanvaIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Canva API error: ${error.message || response.statusText}`);
     }
 

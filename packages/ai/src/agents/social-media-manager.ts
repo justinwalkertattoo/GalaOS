@@ -34,7 +34,7 @@ You work closely with content creators to ensure posts are published correctly a
         return {
           success: true,
           posted: params.platforms,
-          postIds: params.platforms.map((p) => `${p}_12345`),
+          postIds: params.platforms.map((p: string) => `${p}_12345`),
         };
       },
     },

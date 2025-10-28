@@ -121,7 +121,7 @@ export class AdobeIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Adobe Stock API error: ${error.message || response.statusText}`);
     }
 
@@ -201,7 +201,7 @@ export class AdobeIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Adobe Libraries API error: ${error.message || response.statusText}`);
     }
 

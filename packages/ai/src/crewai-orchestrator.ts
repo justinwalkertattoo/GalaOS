@@ -12,7 +12,7 @@
  * - **Tools**: Capabilities agents can use (integrations, APIs, etc.)
  */
 
-import { AnthropicClient } from '@anthropic-ai/sdk';
+import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 
 // Agent Configuration
@@ -102,12 +102,12 @@ export interface CrewConfig {
  */
 export class CrewAgent {
   private config: AgentConfig;
-  private anthropic: AnthropicClient;
+  private anthropic: Anthropic;
   private conversationHistory: Array<{ role: string; content: string }> = [];
 
   constructor(config: AgentConfig) {
     this.config = config;
-    this.anthropic = new AnthropicClient({
+    this.anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY || '',
     });
   }
@@ -136,7 +136,7 @@ export class CrewAgent {
         temperature: this.config.llmConfig?.temperature || 0.7,
         system: systemPrompt,
         messages: [
-          ...this.conversationHistory,
+          ...(this.conversationHistory as any[]),
           {
             role: 'user',
             content: taskPrompt,

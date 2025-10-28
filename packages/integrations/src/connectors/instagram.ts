@@ -70,7 +70,7 @@ export class InstagramIntegration extends BaseIntegration {
       throw new Error(`Failed to create media container: ${containerResponse.statusText}`);
     }
 
-    const { id: containerId } = await containerResponse.json();
+    const { id: containerId } = await containerResponse.json() as any;
 
     // Step 2: Publish the container
     const publishResponse = await fetch(
@@ -120,7 +120,7 @@ export class InstagramIntegration extends BaseIntegration {
           }
         );
 
-        const { id } = await response.json();
+        const { id } = await response.json() as any;
         return id;
       })
     );
@@ -142,7 +142,7 @@ export class InstagramIntegration extends BaseIntegration {
       }
     );
 
-    const { id: carouselId } = await carouselResponse.json();
+    const { id: carouselId } = await carouselResponse.json() as any;
 
     // Publish carousel
     const publishResponse = await fetch(

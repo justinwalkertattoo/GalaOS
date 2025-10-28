@@ -46,7 +46,7 @@ export class MailchimpIntegration extends BaseIntegration {
       throw new Error(`Mailchimp API error: ${response.statusText}`);
     }
 
-    const metadata = await response.json();
+    const metadata = await response.json() as any;
     this.apiEndpoint = metadata.api_endpoint;
     return this.apiEndpoint!;
   }
@@ -128,7 +128,7 @@ export class MailchimpIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Mailchimp API error: ${error.detail || response.statusText}`);
     }
 
@@ -171,7 +171,7 @@ export class MailchimpIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Mailchimp API error: ${error.detail || response.statusText}`);
     }
 
@@ -205,7 +205,7 @@ export class MailchimpIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Mailchimp API error: ${error.detail || response.statusText}`);
     }
 
@@ -229,7 +229,7 @@ export class MailchimpIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Mailchimp API error: ${error.detail || response.statusText}`);
     }
 

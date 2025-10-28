@@ -909,7 +909,7 @@ export class OAuthIntegrationManager {
       },
     });
 
-    return connections.map((conn) => {
+    return connections.map((conn: any) => {
       const metadata = conn.metadata as any;
       return {
         id: conn.id,

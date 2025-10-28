@@ -42,7 +42,7 @@ export class GitHubIntegration extends BaseIntegration {
       throw new Error(`GitHub API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 
   async createIssue(data: {
@@ -78,7 +78,7 @@ export class GitHubIntegration extends BaseIntegration {
       throw new Error(`GitHub API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 
   async createPullRequest(data: {
@@ -114,7 +114,7 @@ export class GitHubIntegration extends BaseIntegration {
       throw new Error(`GitHub API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 
   async createGist(data: {
@@ -143,7 +143,7 @@ export class GitHubIntegration extends BaseIntegration {
       throw new Error(`GitHub API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 
   async listRepositories(data?: { type?: string; sort?: string }): Promise<any[]> {
@@ -166,7 +166,7 @@ export class GitHubIntegration extends BaseIntegration {
       throw new Error(`GitHub API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 
   async triggerWorkflow(data: {
