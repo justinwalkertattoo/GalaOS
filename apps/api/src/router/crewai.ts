@@ -60,7 +60,7 @@ const crewConfigSchema = z.object({
   timeout: z.number().optional(),
 });
 
-export const crewAIRouter = router({
+export const crewAIRouter: any = router({
   /**
    * Create a new crew
    */
@@ -382,10 +382,10 @@ export const crewAIRouter = router({
           .optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }): Promise<any> => {
       // Get template
       const templates = await crewAIRouter.createCaller(ctx).getTemplates();
-      const template = templates.find((t) => t.id === input.templateId);
+      const template = templates.find((t: any) => t.id === input.templateId);
 
       if (!template) {
         throw new TRPCError({

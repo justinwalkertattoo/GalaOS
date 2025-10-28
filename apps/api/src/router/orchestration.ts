@@ -106,7 +106,8 @@ export const orchestrationRouter = router({
       });
 
       // Execute plan with callbacks
-      const results = await orchestrator.executeOrchestrationPlan(
+      const userOrchestrator = await createUserOrchestrator(ctx);
+      const results = await userOrchestrator.executeOrchestrationPlan(
         plan,
         async (step, result) => {
           // On step complete

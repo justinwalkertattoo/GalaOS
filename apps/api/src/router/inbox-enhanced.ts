@@ -422,7 +422,7 @@ export const inboxEnhancedRouter = router({
         completed,
         failed,
       },
-      byType: byType.reduce((acc, item) => {
+      byType: byType.reduce((acc: Record<string, number>, item: any) => {
         acc[item.type] = item._count;
         return acc;
       }, {} as Record<string, number>),

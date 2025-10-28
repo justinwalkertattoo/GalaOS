@@ -132,7 +132,7 @@ export class RobinhoodIntegration extends BaseIntegration {
       throw new Error(`Robinhood API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
 
     // Filter out zero quantity positions
     const activePositions = data.results.filter(

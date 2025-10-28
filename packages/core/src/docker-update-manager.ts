@@ -134,7 +134,7 @@ export class DockerUpdateManager {
   ): Promise<boolean> {
     try {
       return new Promise((resolve, reject) => {
-        this.docker.pull(imageName, {}, (err: any, stream: NodeJS.ReadableStream) => {
+        this.docker.pull(imageName, {}, (err: any, stream: any) => {
           if (err) {
             reject(err);
             return;

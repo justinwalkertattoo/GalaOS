@@ -66,7 +66,7 @@ export class SlackIntegration extends BaseIntegration {
       throw new Error(`Slack API error: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as any;
     if (!result.ok) {
       throw new Error(`Slack error: ${result.error}`);
     }
@@ -88,7 +88,7 @@ export class SlackIntegration extends BaseIntegration {
       throw new Error(`Slack API error: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as any;
     return result.channels || [];
   }
 
@@ -121,7 +121,7 @@ export class SlackIntegration extends BaseIntegration {
       throw new Error(`Slack API error: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as any;
     if (!result.ok) {
       throw new Error(`Slack error: ${result.error}`);
     }

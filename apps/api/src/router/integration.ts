@@ -21,9 +21,9 @@ import {
   slackListChannelsAction,
   slackUploadFileAction,
   githubCreateIssueAction,
-  githubCreatePullRequestAction,
+  githubCreatePRAction,
   githubCreateGistAction,
-  githubListRepositoriesAction,
+  githubListReposAction,
   githubTriggerWorkflowAction,
   gmailSendEmailAction,
   gmailListMessagesAction,
@@ -66,7 +66,7 @@ import {
   capcutListProjectsAction,
   capcutExportVideoAction,
 } from '@galaos/integrations';
-import { EnhancedOAuthIntegrationManager } from '@galaos/core';
+import { OAuthIntegrationManager } from '@galaos/core';
 
 // Initialize integrations
 const bufferIntegration = new BufferIntegration();
@@ -105,9 +105,9 @@ globalIntegrationRegistry.registerAction('slack', slackUploadFileAction);
 
 // Register GitHub actions
 globalIntegrationRegistry.registerAction('github', githubCreateIssueAction);
-globalIntegrationRegistry.registerAction('github', githubCreatePullRequestAction);
+globalIntegrationRegistry.registerAction('github', githubCreatePRAction);
 globalIntegrationRegistry.registerAction('github', githubCreateGistAction);
-globalIntegrationRegistry.registerAction('github', githubListRepositoriesAction);
+globalIntegrationRegistry.registerAction('github', githubListReposAction);
 globalIntegrationRegistry.registerAction('github', githubTriggerWorkflowAction);
 
 // Register Gmail actions
@@ -167,10 +167,10 @@ globalIntegrationRegistry.registerAction('capcut', capcutListProjectsAction);
 globalIntegrationRegistry.registerAction('capcut', capcutExportVideoAction);
 
 // OAuth manager singleton
-let oauthManager: EnhancedOAuthIntegrationManager;
+let oauthManager: OAuthIntegrationManager;
 function getOAuthManager() {
   if (!oauthManager) {
-    oauthManager = new EnhancedOAuthIntegrationManager();
+    oauthManager = new OAuthIntegrationManager();
   }
   return oauthManager;
 }
@@ -249,7 +249,7 @@ export const integrationRouter = router({
 
   // Get available integration providers from registry
   getProviders: publicProcedure.query(async () => {
-    const registeredIntegrations = globalIntegrationRegistry.list();
+    const registeredIntegrations = globalIntegrationRegistry.listIntegrations();
     const manager = getOAuthManager();
     const oauthProviders = manager.getProviders();
 
@@ -257,11 +257,11 @@ export const integrationRouter = router({
     const providers = [
       // Registered integrations (ready to use)
       ...registeredIntegrations.map((integration) => ({
-        id: integration.id,
-        name: integration.name,
-        description: integration.description,
-        icon: integration.icon,
-        authType: integration.authType,
+        id: integration.config.id,
+        name: integration.config.name,
+        description: integration.config.description,
+        icon: integration.config.icon,
+        authType: integration.config.authType,
         status: 'available',
         category: 'integrations',
         agentCapable: true,
@@ -291,7 +291,7 @@ export const integrationRouter = router({
   getActions: publicProcedure
     .input(z.object({ integrationId: z.string() }))
     .query(async ({ input }) => {
-      const integration = globalIntegrationRegistry.get(input.integrationId);
+      const integration = globalIntegrationRegistry.getIntegration(input.integrationId);
       if (!integration) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -299,12 +299,12 @@ export const integrationRouter = router({
         });
       }
 
-      const actions = globalIntegrationRegistry.getActions(input.integrationId);
+      const actions = globalIntegrationRegistry.listActions(input.integrationId);
       return {
         integration: {
-          id: integration.id,
-          name: integration.name,
-          description: integration.description,
+          id: integration.config.id,
+          name: integration.config.name,
+          description: integration.config.description,
         },
         actions: actions.map((action) => ({
           name: action.name,
@@ -341,7 +341,7 @@ export const integrationRouter = router({
       }
 
       // Get integration and action
-      const integration = globalIntegrationRegistry.get(input.integrationId);
+      const integration = globalIntegrationRegistry.getIntegration(input.integrationId);
       if (!integration) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -349,7 +349,7 @@ export const integrationRouter = router({
         });
       }
 
-      const actions = globalIntegrationRegistry.getActions(input.integrationId);
+      const actions = globalIntegrationRegistry.listActions(input.integrationId);
       const action = actions.find((a) => a.name === input.actionName);
       if (!action) {
         throw new TRPCError({

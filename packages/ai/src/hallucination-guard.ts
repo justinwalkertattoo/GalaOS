@@ -141,7 +141,7 @@ export class HallucinationGuard {
 
       if (contradictions.length > 0) {
         result.contradictions = contradictions.map(
-          (c) => `Contradicts: ${c.metadata?.content || c.id}`
+          (c: any) => `Contradicts: ${c.contradictingText || c.text || 'unknown'}`
         );
         result.confidence = 0.3; // Low confidence due to contradictions
         result.warnings.push(
@@ -150,7 +150,7 @@ export class HallucinationGuard {
       } else {
         // No contradictions, check for supporting evidence
         result.supportingEvidence = relatedKnowledge.map(
-          (k) => k.metadata?.content || k.id
+          (k: any) => k.text || k.metadata?.content || 'unknown'
         );
         result.confidence = 0.8; // High confidence with evidence and no contradictions
       }

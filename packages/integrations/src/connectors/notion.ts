@@ -93,7 +93,7 @@ export class NotionIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Notion API error: ${error.message || response.statusText}`);
     }
 
@@ -134,7 +134,7 @@ export class NotionIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Notion API error: ${error.message || response.statusText}`);
     }
 
@@ -203,7 +203,7 @@ export class NotionIntegration extends BaseIntegration {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Notion API error: ${error.message || response.statusText}`);
     }
 
@@ -231,7 +231,7 @@ export class NotionIntegration extends BaseIntegration {
     );
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Notion API error: ${error.message || response.statusText}`);
     }
 
