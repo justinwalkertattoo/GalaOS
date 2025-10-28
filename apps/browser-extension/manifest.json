@@ -1,0 +1,97 @@
+{
+  "manifest_version": 3,
+  "name": "GalaOS AI Agent",
+  "version": "1.0.0",
+  "description": "Intelligent AI agent with workflows, tools, and automation capabilities powered by GalaOS",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "notifications",
+    "webRequest",
+    "cookies",
+    "alarms",
+    "downloads",
+    "clipboardWrite",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "GalaOS AI Agent"
+  },
+  "options_page": "options/options.html",
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+G",
+        "mac": "Command+Shift+G"
+      },
+      "description": "Open GalaOS AI Agent"
+    },
+    "trigger_agent": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+A",
+        "mac": "Command+Shift+A"
+      },
+      "description": "Trigger AI agent on current page"
+    },
+    "start_workflow": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+W",
+        "mac": "Command+Shift+W"
+      },
+      "description": "Start automation workflow"
+    },
+    "capture_context": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+C",
+        "mac": "Command+Shift+C"
+      },
+      "description": "Capture page context for agent"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected.js",
+        "styles/*",
+        "assets/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

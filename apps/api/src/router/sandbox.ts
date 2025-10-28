@@ -464,12 +464,12 @@ export const sandboxRouter = router({
       where: { userId: ctx.user.id },
     });
 
-    const byLanguage = sandboxes.reduce((acc, sandbox) => {
+    const byLanguage = sandboxes.reduce((acc: Record<string, number>, sandbox: any) => {
       acc[sandbox.language] = (acc[sandbox.language] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const byStatus = sandboxes.reduce((acc, sandbox) => {
+    const byStatus = sandboxes.reduce((acc: Record<string, number>, sandbox: any) => {
       acc[sandbox.status] = (acc[sandbox.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

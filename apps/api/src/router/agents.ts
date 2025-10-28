@@ -221,13 +221,13 @@ export const agentsRouter = router({
 
     return {
       total: agents.length,
-      byProvider: agents.reduce((acc, agent) => {
+      byProvider: agents.reduce((acc: Record<string, number>, agent: any) => {
         acc[agent.provider] = (acc[agent.provider] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
-      totalXP: agents.reduce((sum, agent) => sum + agent.xp, 0),
-      maxLevel: Math.max(...agents.map((a) => a.level), 0),
-      totalUsage: agents.reduce((sum, agent) => sum + agent.usageCount, 0),
+      totalXP: agents.reduce((sum: number, agent: any) => sum + agent.xp, 0),
+      maxLevel: Math.max(...agents.map((a: any) => a.level), 0),
+      totalUsage: agents.reduce((sum: number, agent: any) => sum + agent.usageCount, 0),
     };
   }),
 });

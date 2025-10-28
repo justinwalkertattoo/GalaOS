@@ -253,7 +253,7 @@ export class UpdateScheduler {
         // Update all GalaOS containers
         const containers = await this.dockerManager.getGalaOSContainers();
         const containerNames = containers.map((c) => c.Names[0].replace(/^\//, ''));
-        result = await this.dockerManager.updateContainers(containerNames);
+        result = await this.dockerManager.updateContainers(containerNames) as any;
       }
 
       if (result.success) {

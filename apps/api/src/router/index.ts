@@ -17,6 +17,7 @@ import { modelsRouter } from './models';
 import { sandboxRouter } from './sandbox';
 import { toolsRouter } from './tools';
 import { skillsRouter } from './skills';
+import { crewAIRouter } from './crewai';
 
 export const appRouter = router({
   auth: authRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   systemUpdates: systemUpdatesRouter,
   selfCoding: selfCodingRouter,
   oauthIntegrations: oauthIntegrationsRouter,
+  crewAI: crewAIRouter,
   settings: settingsRouter,
   agents: agentsRouter,
   models: modelsRouter,

@@ -1,0 +1,453 @@
+# Kubernetes Deployment for GalaOS
+# Deploy with: kubectl apply -f kubernetes/
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: galaos
+
+---
+# API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galaos-api
+  namespace: galaos
+  labels:
+    app: galaos-api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: galaos-api
+  template:
+    metadata:
+      labels:
+        app: galaos-api
+    spec:
+      containers:
+      - name: api
+        image: justinwalkertattoo/galaos-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: galaos-secrets
+              key: database-url
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: QDRANT_URL
+          value: "http://qdrant:6333"
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: galaos-api
+  namespace: galaos
+spec:
+  type: ClusterIP
+  selector:
+    app: galaos-api
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+
+---
+# Web Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galaos-web
+  namespace: galaos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: galaos-web
+  template:
+    metadata:
+      labels:
+        app: galaos-web
+    spec:
+      containers:
+      - name: web
+        image: justinwalkertattoo/galaos-web:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.galaos.app"
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+
+---
+# Web Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: galaos-web
+  namespace: galaos
+spec:
+  type: ClusterIP
+  selector:
+    app: galaos-web
+  ports:
+  - port: 80
+    targetPort: 3000
+
+---
+# Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galaos-worker
+  namespace: galaos
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: galaos-worker
+  template:
+    metadata:
+      labels:
+        app: galaos-worker
+    spec:
+      containers:
+      - name: worker
+        image: justinwalkertattoo/galaos-worker:latest
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: galaos-secrets
+              key: database-url
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: galaos
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "galaos"
+        - name: POSTGRES_USER
+          value: "galaos"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: galaos-secrets
+              key: postgres-password
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: galaos
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+
+---
+# Redis StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: galaos
+spec:
+  serviceName: redis
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        command: ["redis-server", "--appendonly", "yes"]
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: galaos
+spec:
+  clusterIP: None
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+
+---
+# Qdrant StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qdrant
+  namespace: galaos
+spec:
+  serviceName: qdrant
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qdrant
+  template:
+    metadata:
+      labels:
+        app: qdrant
+    spec:
+      containers:
+      - name: qdrant
+        image: qdrant/qdrant:latest
+        ports:
+        - containerPort: 6333
+        - containerPort: 6334
+        volumeMounts:
+        - name: qdrant-data
+          mountPath: /qdrant/storage
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+          limits:
+            cpu: "4"
+            memory: "16Gi"
+  volumeClaimTemplates:
+  - metadata:
+      name: qdrant-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+# Qdrant Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: galaos
+spec:
+  clusterIP: None
+  selector:
+    app: qdrant
+  ports:
+  - name: http
+    port: 6333
+  - name: grpc
+    port: 6334
+
+---
+# Ingress (NGINX)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: galaos-ingress
+  namespace: galaos
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  tls:
+  - hosts:
+    - galaos.app
+    - api.galaos.app
+    secretName: galaos-tls
+  rules:
+  - host: galaos.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: galaos-web
+            port:
+              number: 80
+  - host: api.galaos.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: galaos-api
+            port:
+              number: 80
+
+---
+# HorizontalPodAutoscaler for API
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: galaos-api-hpa
+  namespace: galaos
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: galaos-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# HorizontalPodAutoscaler for Workers
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: galaos-worker-hpa
+  namespace: galaos
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: galaos-worker
+  minReplicas: 5
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75

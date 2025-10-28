@@ -120,7 +120,7 @@ export class KnowledgeGraph {
         { nodeId }
       );
 
-      return result.records.map((record) => {
+      return result.records.map((record: any) => {
         const node = record.get('related');
         return {
           id: node.properties.id,
@@ -148,7 +148,7 @@ export class KnowledgeGraph {
         { nodeId }
       );
 
-      return result.records.map((record) => {
+      return result.records.map((record: any) => {
         const node = record.get('contradicting');
         return {
           id: node.properties.id,
@@ -287,7 +287,7 @@ export class KnowledgeGraph {
         { userId, limit }
       );
 
-      return result.records.map((record) => {
+      return result.records.map((record: any) => {
         const node = record.get('n');
         return {
           id: node.properties.id,
@@ -366,7 +366,7 @@ export class KnowledgeGraph {
         { query, userId, limit }
       );
 
-      return result.records.map((record) => {
+      return result.records.map((record: any) => {
         const node = record.get('n');
         return {
           id: node.properties.id,

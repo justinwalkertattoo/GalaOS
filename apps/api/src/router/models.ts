@@ -227,12 +227,12 @@ export const modelsRouter = router({
       where: { userId: ctx.user.id },
     });
 
-    const byType = providers.reduce((acc, provider) => {
+    const byType = providers.reduce((acc: Record<string, number>, provider: any) => {
       acc[provider.type] = (acc[provider.type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const byProvider = providers.reduce((acc, provider) => {
+    const byProvider = providers.reduce((acc: Record<string, number>, provider: any) => {
       acc[provider.provider] = (acc[provider.provider] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -241,7 +241,7 @@ export const modelsRouter = router({
       total: providers.length,
       byType,
       byProvider,
-      activeProviders: providers.filter((p) => p.status === 'active').length,
+      activeProviders: providers.filter((p: any) => p.status === 'active').length,
     };
   }),
 });
