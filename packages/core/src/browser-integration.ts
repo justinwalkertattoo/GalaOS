@@ -178,7 +178,7 @@ export class BrowserIntegration {
       const messages = await page.$$('[data-message-author-role="assistant"]');
       const lastMessage = messages[messages.length - 1];
 
-      const responseText = await page.evaluate((el) => el?.textContent || '', lastMessage);
+      const responseText = await page.evaluate((el: any) => el?.textContent || '', lastMessage);
 
       return responseText;
     } catch (error: any) {
@@ -225,11 +225,11 @@ export class BrowserIntegration {
 
       // Get latest Claude message
       // This selector may need adjustment based on Claude's current UI
-      const response = await page.evaluate(() => {
+      const response = await page.evaluate(`() => {
         const messages = document.querySelectorAll('[data-role="message"]');
         const lastMessage = messages[messages.length - 1];
         return lastMessage?.textContent || '';
-      });
+      }`) as string;
 
       return response;
     } catch (error: any) {

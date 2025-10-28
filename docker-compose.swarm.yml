@@ -1,0 +1,297 @@
+# Docker Swarm Stack Configuration for GalaOS
+# Deploy with: docker stack deploy -c docker-compose.swarm.yml galaos
+
+version: '3.8'
+
+services:
+  # API Service (replicated across nodes)
+  api:
+    image: justinwalkertattoo/galaos-api:latest
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.role == worker
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 30s
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.api.rule=Host(`api.galaos.app`)"
+        - "traefik.http.routers.api.entrypoints=websecure"
+        - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+        - "traefik.http.services.api.loadbalancer.server.port=3000"
+        - "traefik.http.services.api.loadbalancer.healthcheck.path=/api/health"
+        - "traefik.http.services.api.loadbalancer.healthcheck.interval=10s"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://galaos:${POSTGRES_PASSWORD}@postgres:5432/galaos
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+    networks:
+      - galaos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Web Service (replicated)
+  web:
+    image: justinwalkertattoo/galaos-web:latest
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.web.rule=Host(`galaos.app`)"
+        - "traefik.http.routers.web.entrypoints=websecure"
+        - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+        - "traefik.http.services.web.loadbalancer.server.port=3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.galaos.app
+    networks:
+      - galaos-network
+
+  # Worker Service (replicated for background jobs)
+  worker:
+    image: justinwalkertattoo/galaos-worker:latest
+    deploy:
+      mode: replicated
+      replicas: 5
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://galaos:${POSTGRES_PASSWORD}@postgres:5432/galaos
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - galaos-network
+
+  # PostgreSQL (single master with replication)
+  postgres:
+    image: postgres:15-alpine
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.database == primary
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    environment:
+      - POSTGRES_DB=galaos
+      - POSTGRES_USER=galaos
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - galaos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U galaos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (clustered for high availability)
+  redis:
+    image: redis:7-alpine
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    command: redis-server --appendonly yes --cluster-enabled yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - galaos-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Qdrant (vector database)
+  qdrant:
+    image: qdrant/qdrant:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.vector-db == true
+      resources:
+        limits:
+          cpus: '4'
+          memory: 16G
+        reservations:
+          cpus: '2'
+          memory: 8G
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - galaos-network
+
+  # Traefik (load balancer and reverse proxy)
+  traefik:
+    image: traefik:v2.10
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik.rule=Host(`traefik.galaos.app`)"
+        - "traefik.http.routers.traefik.service=api@internal"
+        - "traefik.http.routers.traefik.entrypoints=websecure"
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@galaos.app"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--metrics.prometheus=true"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certs:/letsencrypt
+    networks:
+      - galaos-network
+
+  # Prometheus (metrics collection)
+  prometheus:
+    image: prom/prometheus:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - galaos-network
+
+  # Grafana (metrics visualization)
+  grafana:
+    image: grafana/grafana:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana.rule=Host(`metrics.galaos.app`)"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - galaos-network
+
+networks:
+  galaos-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  qdrant-data:
+    driver: local
+  traefik-certs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+configs:
+  prometheus_config:
+    file: ./monitoring/prometheus.yml
+
+secrets:
+  postgres_password:
+    external: true
+  grafana_password:
+    external: true

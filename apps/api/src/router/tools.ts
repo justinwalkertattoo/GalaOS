@@ -164,19 +164,19 @@ export const toolsRouter = router({
       where: { userId: ctx.user.id },
     });
 
-    const byCategory = tools.reduce((acc, tool) => {
+    const byCategory = tools.reduce((acc: Record<string, number>, tool: any) => {
       acc[tool.category] = (acc[tool.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const byTier = tools.reduce((acc, tool) => {
+    const byTier = tools.reduce((acc: Record<string, number>, tool: any) => {
       acc[tool.tier] = (acc[tool.tier] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     return {
       total: tools.length,
-      active: tools.filter((t) => t.isActive).length,
+      active: tools.filter((t: any) => t.isActive).length,
       byCategory,
       byTier,
     };
