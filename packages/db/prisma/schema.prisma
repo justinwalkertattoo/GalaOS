@@ -40,6 +40,11 @@ model User {
   modelProviders ModelProvider[]
   agentConversations AgentConversation[]
   sandboxes     Sandbox[]
+  apiUsageQuotas ApiUsageQuota[]
+  apiUsageLogs  ApiUsageLog[]
+  costAlerts    CostAlert[]
+  huggingFaceModels HuggingFaceModel[]
+  githubModelRepos GitHubModelRepo[]
 
   @@map("users")
 }
@@ -550,4 +555,204 @@ model Sandbox {
   conversations AgentConversation[]
 
   @@map("sandboxes")
+}
+
+// ============================================================================
+// API USAGE & COST MANAGEMENT
+// ============================================================================
+
+model ApiUsageQuota {
+  id          String   @id @default(cuid())
+  userId      String?  // null = global/system quota
+
+  // Provider
+  provider    String   // openai, anthropic, perplexity, gemini, huggingface
+
+  // Quota limits
+  dailyLimit      Int?     // Max requests per day
+  monthlyLimit    Int?     // Max requests per month
+  dailyCostLimit  Float?   // Max cost per day in USD
+  monthlyCostLimit Float?  // Max cost per month in USD
+
+  // Token limits
+  dailyTokenLimit Int?     // Max tokens per day
+  monthlyTokenLimit Int?   // Max tokens per month
+
+  // Current usage (resets daily/monthly)
+  currentDailyUsage    Int      @default(0)
+  currentMonthlyUsage  Int      @default(0)
+  currentDailyCost     Float    @default(0)
+  currentMonthlyCost   Float    @default(0)
+  currentDailyTokens   Int      @default(0)
+  currentMonthlyTokens Int      @default(0)
+
+  // Reset timestamps
+  lastDailyReset   DateTime @default(now())
+  lastMonthlyReset DateTime @default(now())
+
+  // Status
+  isActive         Boolean  @default(true)
+  alertOnThreshold Float?   @default(0.8) // Alert at 80% usage
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@map("api_usage_quotas")
+}
+
+model ApiUsageLog {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Request details
+  provider    String   // openai, anthropic, perplexity, gemini, huggingface
+  model       String   // gpt-4, claude-3-opus, etc.
+  endpoint    String?  // chat, completion, embedding, etc.
+
+  // Usage metrics
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
+
+  // Cost tracking
+  estimatedCost Float?  // In USD
+
+  // Request metadata
+  requestId    String?
+  duration     Int?     // In milliseconds
+  statusCode   Int?
+  error        String?
+
+  // Context
+  agentId      String?
+  workflowId   String?
+  conversationId String?
+
+  timestamp    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, provider, timestamp])
+  @@index([provider, timestamp])
+  @@map("api_usage_logs")
+}
+
+model CostAlert {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Alert trigger
+  provider    String
+  alertType   String   // daily_limit, monthly_limit, daily_cost, monthly_cost, token_limit
+  threshold   Float    // Percentage (0-1) or absolute value
+  currentValue Float   // Current usage/cost
+
+  // Alert details
+  message     String   @db.Text
+  severity    String   // info, warning, critical
+
+  // Status
+  isRead      Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@map("cost_alerts")
+}
+
+// ============================================================================
+// OPEN SOURCE MODEL INTEGRATIONS
+// ============================================================================
+
+model HuggingFaceModel {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system/public model
+
+  // Model details
+  modelId     String   // huggingface model ID (e.g., "meta-llama/Llama-2-7b")
+  name        String
+  description String?  @db.Text
+  author      String?
+  license     String?
+
+  // Model metadata
+  task        String?  // text-generation, text-classification, etc.
+  tags        String[] @default([])
+  downloads   Int?     @default(0)
+  likes       Int?     @default(0)
+
+  // Deployment
+  isDeployed  Boolean  @default(false)
+  endpoint    String?  // API endpoint if deployed
+
+  // Usage tracking
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  // Configuration
+  config      Json     @default("{}")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId])
+  @@index([task, tags])
+  @@map("huggingface_models")
+}
+
+model GitHubModelRepo {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system/public repo
+
+  // Repository details
+  fullName    String   @unique // owner/repo
+  name        String
+  description String?  @db.Text
+  owner       String
+
+  // Model metadata
+  modelType   String?  // llm, embedding, diffusion, etc.
+  framework   String?  // pytorch, tensorflow, jax, etc.
+  tags        String[] @default([])
+
+  // GitHub metrics
+  stars       Int?     @default(0)
+  forks       Int?     @default(0)
+  issues      Int?     @default(0)
+
+  // Repository info
+  repoUrl     String
+  cloneUrl    String?
+  homepage    String?
+  license     String?
+  language    String?
+
+  // Local deployment
+  isCloned    Boolean  @default(false)
+  localPath   String?
+
+  // Usage tracking
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  // Sync
+  lastSyncedAt DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([modelType, framework])
+  @@index([stars])
+  @@map("github_model_repos")
 }

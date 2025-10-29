@@ -201,6 +201,170 @@ export class GitHubIntegration extends BaseIntegration {
 
     return { success: true, status: response.status };
   }
+
+  /**
+   * Search for AI model repositories
+   */
+  async searchModelRepos(data: {
+    query: string;
+    sort?: 'stars' | 'updated' | 'forks';
+    order?: 'asc' | 'desc';
+    perPage?: number;
+  }): Promise<any> {
+    const creds = this.credentials as OAuth2Credentials;
+    if (!creds?.accessToken) throw new Error('Not authenticated');
+
+    // Build search query with AI/ML related terms
+    const searchTerms = [
+      data.query,
+      'machine-learning OR deep-learning OR artificial-intelligence OR neural-network',
+      'language:Python OR language:Jupyter-Notebook',
+    ].join(' ');
+
+    const params = new URLSearchParams({
+      q: searchTerms,
+      sort: data.sort || 'stars',
+      order: data.order || 'desc',
+      per_page: String(data.perPage || 30),
+    });
+
+    const response = await fetch(
+      `https://api.github.com/search/repositories?${params}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${creds.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Get repository details including README
+   */
+  async getRepoDetails(data: { owner: string; repo: string }): Promise<any> {
+    const creds = this.credentials as OAuth2Credentials;
+    if (!creds?.accessToken) throw new Error('Not authenticated');
+
+    const [repo, readme] = await Promise.all([
+      fetch(`https://api.github.com/repos/${data.owner}/${data.repo}`, {
+        headers: {
+          'Authorization': `Bearer ${creds.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`https://api.github.com/repos/${data.owner}/${data.repo}/readme`, {
+        headers: {
+          'Authorization': `Bearer ${creds.accessToken}`,
+          'Accept': 'application/vnd.github.v3.raw',
+        },
+      }).then((r) => (r.ok ? r.text() : null)),
+    ]);
+
+    return {
+      ...repo,
+      readme,
+    };
+  }
+
+  /**
+   * Get repository contents
+   */
+  async getContents(data: {
+    owner: string;
+    repo: string;
+    path?: string;
+  }): Promise<any> {
+    const creds = this.credentials as OAuth2Credentials;
+    if (!creds?.accessToken) throw new Error('Not authenticated');
+
+    const path = data.path ? `/${data.path}` : '';
+    const response = await fetch(
+      `https://api.github.com/repos/${data.owner}/${data.repo}/contents${path}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${creds.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Clone repository locally
+   */
+  async cloneRepo(data: {
+    owner: string;
+    repo: string;
+    targetPath: string;
+  }): Promise<{ success: boolean; path: string }> {
+    // This would typically be handled by a worker or background job
+    // For now, return the clone URL
+    const creds = this.credentials as OAuth2Credentials;
+    if (!creds?.accessToken) throw new Error('Not authenticated');
+
+    return {
+      success: true,
+      path: `https://github.com/${data.owner}/${data.repo}.git`,
+    };
+  }
+
+  /**
+   * Get trending repositories (AI/ML focus)
+   */
+  async getTrendingModelRepos(data?: {
+    language?: string;
+    since?: 'daily' | 'weekly' | 'monthly';
+  }): Promise<any> {
+    const creds = this.credentials as OAuth2Credentials;
+    if (!creds?.accessToken) throw new Error('Not authenticated');
+
+    // GitHub doesn't have a trending API, so we search for recently starred AI repos
+    const dateRange = this.getDateRange(data?.since || 'weekly');
+    const query = `stars:>100 created:>${dateRange} topic:machine-learning OR topic:deep-learning OR topic:artificial-intelligence`;
+
+    const params = new URLSearchParams({
+      q: query,
+      sort: 'stars',
+      order: 'desc',
+      per_page: '30',
+    });
+
+    const response = await fetch(
+      `https://api.github.com/search/repositories?${params}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${creds.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  private getDateRange(period: 'daily' | 'weekly' | 'monthly'): string {
+    const now = new Date();
+    const days = period === 'daily' ? 1 : period === 'weekly' ? 7 : 30;
+    const date = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return date.toISOString().split('T')[0];
+  }
 }
 
 // GitHub Actions
@@ -305,5 +469,68 @@ export const githubTriggerWorkflowAction: IntegrationAction = {
     const integration = new GitHubIntegration();
     integration.setCredentials(credentials);
     return await integration.triggerWorkflow(input);
+  },
+};
+
+export const githubSearchModelReposAction: IntegrationAction = {
+  name: 'search_model_repos',
+  description: 'Search for AI/ML model repositories on GitHub',
+  inputSchema: z.object({
+    query: z.string(),
+    sort: z.enum(['stars', 'updated', 'forks']).optional(),
+    order: z.enum(['asc', 'desc']).optional(),
+    perPage: z.number().optional(),
+  }),
+  outputSchema: z.any(),
+  async execute(input, credentials) {
+    const integration = new GitHubIntegration();
+    integration.setCredentials(credentials);
+    return await integration.searchModelRepos(input);
+  },
+};
+
+export const githubGetRepoDetailsAction: IntegrationAction = {
+  name: 'get_repo_details',
+  description: 'Get detailed information about a repository including README',
+  inputSchema: z.object({
+    owner: z.string(),
+    repo: z.string(),
+  }),
+  outputSchema: z.any(),
+  async execute(input, credentials) {
+    const integration = new GitHubIntegration();
+    integration.setCredentials(credentials);
+    return await integration.getRepoDetails(input);
+  },
+};
+
+export const githubGetContentsAction: IntegrationAction = {
+  name: 'get_contents',
+  description: 'Get contents of a file or directory in a repository',
+  inputSchema: z.object({
+    owner: z.string(),
+    repo: z.string(),
+    path: z.string().optional(),
+  }),
+  outputSchema: z.any(),
+  async execute(input, credentials) {
+    const integration = new GitHubIntegration();
+    integration.setCredentials(credentials);
+    return await integration.getContents(input);
+  },
+};
+
+export const githubGetTrendingModelReposAction: IntegrationAction = {
+  name: 'get_trending_model_repos',
+  description: 'Get trending AI/ML repositories',
+  inputSchema: z.object({
+    language: z.string().optional(),
+    since: z.enum(['daily', 'weekly', 'monthly']).optional(),
+  }),
+  outputSchema: z.any(),
+  async execute(input, credentials) {
+    const integration = new GitHubIntegration();
+    integration.setCredentials(credentials);
+    return await integration.getTrendingModelRepos(input);
   },
 };
