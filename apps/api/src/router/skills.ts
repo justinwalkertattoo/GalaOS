@@ -40,18 +40,18 @@ export const skillsRouter = router({
     });
 
     // Build tree structure (root nodes = skills with no parent)
-    const rootSkills = skills.filter((s) => !s.parentId);
+    const rootSkills = skills.filter((s: any) => !s.parentId);
 
     const buildTree = (parentId: string | null): any[] => {
       return skills
-        .filter((s) => s.parentId === parentId)
-        .map((skill) => ({
+        .filter((s: any) => s.parentId === parentId)
+        .map((skill: any) => ({
           ...skill,
           children: buildTree(skill.id),
         }));
     };
 
-    return rootSkills.map((skill) => ({
+    return rootSkills.map((skill: any) => ({
       ...skill,
       children: buildTree(skill.id),
     }));
@@ -226,25 +226,25 @@ export const skillsRouter = router({
       where: { userId: ctx.user.id },
     });
 
-    const byCategory = skills.reduce((acc, skill) => {
+    const byCategory = skills.reduce((acc: Record<string, number>, skill: any) => {
       acc[skill.category] = (acc[skill.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const byTier = skills.reduce((acc, skill) => {
+    const byTier = skills.reduce((acc: Record<string, number>, skill: any) => {
       acc[skill.tier] = (acc[skill.tier] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const totalXpCost = skills.reduce((sum, skill) => sum + skill.xpCost, 0);
+    const totalXpCost = skills.reduce((sum: number, skill: any) => sum + skill.xpCost, 0);
 
     return {
       total: skills.length,
-      active: skills.filter((s) => s.isActive).length,
+      active: skills.filter((s: any) => s.isActive).length,
       byCategory,
       byTier,
       totalXpCost,
-      rootSkills: skills.filter((s) => !s.parentId).length,
+      rootSkills: skills.filter((s: any) => !s.parentId).length,
     };
   }),
 

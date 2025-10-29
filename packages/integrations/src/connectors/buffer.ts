@@ -41,7 +41,7 @@ export class BufferIntegration extends BaseIntegration {
       throw new Error(`Buffer API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 
   async createPost(data: {
@@ -82,7 +82,7 @@ export class BufferIntegration extends BaseIntegration {
       throw new Error(`Buffer API error: ${response.statusText}`);
     }
 
-    return await response.json();
+    return await response.json() as any;
   }
 }
 

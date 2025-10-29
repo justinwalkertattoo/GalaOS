@@ -12,9 +12,9 @@ export default function SkillsPage() {
   const [selectedParent, setSelectedParent] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
 
-  const { data: skillTree, refetch } = trpc.skills.tree.useQuery();
-  const { data: skillList } = trpc.skills.list.useQuery();
-  const { data: stats } = trpc.skills.stats.useQuery();
+  const { data: skillTree, refetch } = trpc.skills.tree.useQuery({});
+  const { data: skillList } = trpc.skills.list.useQuery({});
+  const { data: stats } = trpc.skills.stats.useQuery({});
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
