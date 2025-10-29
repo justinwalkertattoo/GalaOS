@@ -18,7 +18,10 @@
     "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker-compose -f docker/docker-compose.yml down",
     "db:migrate": "cd packages/db && npx prisma migrate dev",
-    "db:studio": "cd packages/db && npx prisma studio"
+    "db:studio": "cd packages/db && npx prisma studio",
+    "setup:cost": "npx tsx scripts/setup-cost-optimization.ts",
+    "cost:check": "echo 'Cost monitoring coming soon!'",
+    "ollama:check": "curl -s http://localhost:11434/api/tags | jq '.models[]' | wc -l"
   },
   "devDependencies": {
     "@turbo/gen": "^1.11.2",
