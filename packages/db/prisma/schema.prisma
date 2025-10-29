@@ -551,3 +551,236 @@ model Sandbox {
 
   @@map("sandboxes")
 }
+
+// ============================================================================
+// MODEL CONTEXT PROTOCOL (MCP)
+// ============================================================================
+
+model MCPServer {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system server
+
+  // Server Configuration
+  name        String
+  description String?
+  command     String   // Command to start the server or Docker image
+  args        String[] @default([]) // Command arguments
+  env         Json?    // Environment variables
+
+  // Lifecycle Management
+  enabled     Boolean  @default(true)
+  autoStart   Boolean  @default(true)
+  restart     String   @default("on-failure") // always, on-failure, unless-stopped, no
+
+  // Health Check Configuration
+  healthCheck Json?    // { interval, timeout, retries }
+
+  // Status
+  status      String   @default("stopped") // starting, running, stopped, error, restarting
+  pid         Int?
+  startedAt   DateTime?
+  lastError   String?  @db.Text
+  restartCount Int     @default(0)
+
+  // Docker
+  containerId String?
+  containerName String?
+
+  // Metadata
+  version     String?
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  resources   MCPResource[]
+  tools       MCPTool[]
+  prompts     MCPPrompt[]
+
+  @@map("mcp_servers")
+}
+
+model MCPResource {
+  id          String   @id @default(cuid())
+  serverId    String
+
+  // Resource Information
+  uri         String
+  name        String
+  description String?
+  mimeType    String?
+
+  // Metadata
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  server      MCPServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@unique([serverId, uri])
+  @@map("mcp_resources")
+}
+
+model MCPTool {
+  id          String   @id @default(cuid())
+  serverId    String
+
+  // Tool Information
+  name        String
+  description String   @db.Text
+  inputSchema Json     // JSON schema for tool parameters
+  outputSchema Json?   // JSON schema for tool output
+
+  // Usage Stats
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  server      MCPServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@unique([serverId, name])
+  @@map("mcp_tools")
+}
+
+model MCPPrompt {
+  id          String   @id @default(cuid())
+  serverId    String
+
+  // Prompt Information
+  name        String
+  description String?  @db.Text
+  arguments   Json?    // Array of argument definitions
+
+  // Usage Stats
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  server      MCPServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@unique([serverId, name])
+  @@map("mcp_prompts")
+}
+
+model HuggingFaceResource {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system resource
+
+  // Resource Information
+  resourceId  String   @unique // HuggingFace model/dataset/space ID
+  name        String
+  type        String   // model, dataset, space, database
+  author      String?
+
+  description String?  @db.Text
+  downloads   Int?
+  likes       Int?
+  tags        String[] @default([])
+
+  // Metadata
+  lastModified String?
+  private     Boolean  @default(false)
+  metadata    Json?
+
+  // Sync
+  syncedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([author])
+  @@map("huggingface_resources")
+}
+
+model GitHubResource {
+  id          String   @id @default(cuid())
+  userId      String?  // null = system resource
+
+  // Resource Information
+  resourceId  String   @unique // GitHub repo/gist/action ID
+  name        String
+  type        String   // repository, gist, tool, action
+  owner       String
+
+  description String?  @db.Text
+  url         String
+  stars       Int?
+  language    String?
+  topics      String[] @default([])
+
+  // Metadata
+  private     Boolean  @default(false)
+  metadata    Json?
+
+  // Sync
+  syncedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([owner])
+  @@map("github_resources")
+}
+
+model OllamaModel {
+  id          String   @id @default(cuid())
+
+  // Model Information
+  name        String   @unique
+  model       String
+  size        BigInt
+  digest      String
+
+  // Details
+  modifiedAt  String
+  details     Json?
+
+  // Provider Connection
+  providerId  String?  // Which Ollama instance
+
+  // Status
+  isAvailable Boolean  @default(true)
+  lastChecked DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([providerId])
+  @@map("ollama_models")
+}
+
+model ProviderAPIKey {
+  id          String   @id @default(cuid())
+  userId      String   // User who owns this key
+
+  // Provider Information
+  provider    String   // anthropic, openai, perplexity, google, huggingface
+  name        String   // Display name for this key
+
+  // API Key (encrypted)
+  apiKey      String   @db.Text
+
+  // Configuration
+  baseURL     String?
+  config      Json?    // Provider-specific config
+
+  // Usage Tracking
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, provider, name])
+  @@index([provider])
+  @@map("provider_api_keys")
+}

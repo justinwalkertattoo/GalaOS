@@ -1,0 +1,106 @@
+{
+  "servers": [
+    {
+      "id": "filesystem",
+      "name": "Filesystem MCP Server",
+      "description": "Provides file system access through MCP",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"],
+      "env": {},
+      "enabled": true,
+      "autoStart": true,
+      "restart": "on-failure",
+      "healthCheck": {
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      }
+    },
+    {
+      "id": "github",
+      "name": "GitHub MCP Server",
+      "description": "Provides GitHub integration through MCP",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "enabled": true,
+      "autoStart": true,
+      "restart": "on-failure",
+      "healthCheck": {
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      }
+    },
+    {
+      "id": "puppeteer",
+      "name": "Puppeteer MCP Server",
+      "description": "Browser automation through MCP",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {},
+      "enabled": false,
+      "autoStart": false,
+      "restart": "on-failure",
+      "healthCheck": {
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      }
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL MCP Server",
+      "description": "Database access through MCP",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://galaos:password@postgres:5432/galaos"],
+      "env": {},
+      "enabled": false,
+      "autoStart": false,
+      "restart": "on-failure",
+      "healthCheck": {
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      }
+    },
+    {
+      "id": "brave-search",
+      "name": "Brave Search MCP Server",
+      "description": "Web search through Brave Search API",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      },
+      "enabled": false,
+      "autoStart": false,
+      "restart": "on-failure",
+      "healthCheck": {
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      }
+    },
+    {
+      "id": "custom-python",
+      "name": "Custom Python MCP Server",
+      "description": "Example custom Python-based MCP server",
+      "command": "python",
+      "args": ["/path/to/your/mcp/server.py"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "enabled": false,
+      "autoStart": false,
+      "restart": "on-failure",
+      "healthCheck": {
+        "interval": 30000,
+        "timeout": 5000,
+        "retries": 3
+      }
+    }
+  ]
+}
