@@ -18,6 +18,7 @@ import { sandboxRouter } from './sandbox';
 import { toolsRouter } from './tools';
 import { skillsRouter } from './skills';
 import { crewAIRouter } from './crewai';
+import { mcpRouter } from './mcp';
 
 export const appRouter = router({
   auth: authRouter,
@@ -39,6 +40,7 @@ export const appRouter = router({
   sandbox: sandboxRouter,
   tools: toolsRouter,
   skills: skillsRouter,
+  mcp: mcpRouter,
 });
 
 export type AppRouter = typeof appRouter;
