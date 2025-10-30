@@ -13,7 +13,7 @@ export default function SettingsPage() {
   });
   const [showKey, setShowKey] = useState(false);
 
-  const { data: apiKeys, refetch } = trpc.settings.listApiKeys.useQuery({});
+  const { data: apiKeys, refetch } = trpc.settings.listApiKeys.useQuery();
 
   const addKeyMutation = trpc.settings.addApiKey.useMutation({
     onSuccess: () => {

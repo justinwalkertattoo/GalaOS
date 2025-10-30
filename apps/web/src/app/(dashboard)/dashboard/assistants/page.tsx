@@ -7,7 +7,7 @@ import { Plus, Users, Code, Wrench, Sparkles, Zap, MessageSquare, FileCode, Glob
 export default function AssistantsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
-  const { data: agents, refetch } = trpc.agents.list.useQuery({});
+  const { data: agents, refetch } = trpc.agents.list.useQuery({ includePublic: true });
   const createMutation = trpc.agents.create.useMutation({
     onSuccess: () => refetch(),
   });

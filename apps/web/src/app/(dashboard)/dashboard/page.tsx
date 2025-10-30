@@ -7,7 +7,7 @@ import { LayoutDashboard, Workflow, MessageSquare, Database, Settings, Sparkles 
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: user, isLoading } = trpc.auth.me.useQuery({});
+  const { data: user, isLoading } = trpc.auth.me.useQuery();
 
   useEffect(() => {
     if (!isLoading && !user) {

@@ -6,8 +6,8 @@ import { Plus, Sparkles, Zap, Trophy, Star, TrendingUp } from 'lucide-react';
 
 export default function AgentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { data: agents, refetch } = trpc.agents.list.useQuery({});
-  const { data: stats } = trpc.agents.stats.useQuery({});
+  const { data: agents, refetch } = trpc.agents.list.useQuery({ includePublic: true });
+  const { data: stats } = trpc.agents.stats.useQuery();
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">

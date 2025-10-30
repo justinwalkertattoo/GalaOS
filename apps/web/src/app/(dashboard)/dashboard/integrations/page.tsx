@@ -11,7 +11,7 @@ export default function IntegrationsPage() {
   const [apiKeyValue, setApiKeyValue] = useState<string>('');
   const [connectingProvider, setConnectingProvider] = useState<string>('');
 
-  const connectApiKeyMutation = trpc.oauthIntegrations.connectApiKey.useMutation({
+  const connectApiKeyMutation = trpc.settings.addApiKey.useMutation({
     onSuccess: () => {
       setApiKeyValue('');
       setApiKeyProvider('');
@@ -50,7 +50,10 @@ export default function IntegrationsPage() {
 
   const handleApiKeyConnect = async () => {
     if (!apiKeyProvider || !apiKeyValue) return;
-    await connectApiKeyMutation.mutateAsync({ providerId: apiKeyProvider, apiKey: apiKeyValue });
+    const p = apiKeyProvider.toLowerCase();
+    const known = ['anthropic','openai','buffer','instagram','sendgrid','stripe'] as const;
+    const type = (known as readonly string[]).includes(p) ? (p as any) : ('other' as any);
+    await connectApiKeyMutation.mutateAsync({ name: apiKeyProvider, type, key: apiKeyValue });
   };
 
   return (

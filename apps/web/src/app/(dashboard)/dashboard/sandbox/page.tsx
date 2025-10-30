@@ -19,8 +19,8 @@ export default function SandboxPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedSandbox, setSelectedSandbox] = useState<string | null>(null);
 
-  const { data: sandboxes, refetch } = trpc.sandbox.list.useQuery({});
-  const { data: stats } = trpc.sandbox.stats.useQuery({});
+  const { data: sandboxes, refetch } = trpc.sandbox.list.useQuery();
+  const { data: stats } = trpc.sandbox.stats.useQuery();
 
   const activeSandbox = sandboxes?.find((s: any) => s.id === selectedSandbox);
 

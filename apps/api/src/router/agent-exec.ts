@@ -85,7 +85,11 @@ export const agentExecRouter = router({
       try {
         const res = await axios.request({ url: input.url, method: input.method, data: input.body, headers: input.headers, timeout: input.timeoutMs, responseType: 'text' });
         writeAudit(ctx, { action: 'net.fetch.result', input: { url: input.url }, result: { status: res.status } });
-        return { ok: true as const, status: res.status, headers: res.headers, body: String(res.data).slice(0, 1024*128) };
+        const plainHeaders: Record<string, any> = {};
+        try { Object.entries((res as any).headers || {}).forEach(([k, v]) => { plainHeaders[k] = v as any; }); } catch {}
+        return { ok: true as const, status: res.status, headers: plainHeaders, body: String(res.data).slice(0, 1024*128) } as {
+          ok: true; status: number; headers: Record<string, any>; body: string;
+        };
       } catch (e: any) {
         writeAudit(ctx, { action: 'net.fetch.result', input: { url: input.url }, result: { error: e.message } });
         return { ok: false as const, error: e.message };

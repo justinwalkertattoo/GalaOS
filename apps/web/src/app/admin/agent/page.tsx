@@ -31,8 +31,8 @@ function CmdRunner() {
       </div>
       {run.data ? (
         <pre className="whitespace-pre-wrap text-xs p-2 bg-gray-50 border rounded">$ {cmd} {args}\n
-exit {run.data.code}\n
-{run.data.stdout || run.data.stderr}</pre>
+exit {'code' in run.data ? run.data.code : 'n/a'}\n
+{('stdout' in run.data ? run.data.stdout : undefined) || ('stderr' in run.data ? (run.data as any).stderr : (run.data as any).error)}</pre>
       ) : null}
     </section>
   );

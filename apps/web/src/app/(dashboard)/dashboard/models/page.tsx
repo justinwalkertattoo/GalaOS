@@ -10,8 +10,8 @@ export default function ModelsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedType, setSelectedType] = useState<ProviderType>('ollama');
 
-  const { data: providers, refetch } = trpc.models.list.useQuery({});
-  const { data: stats } = trpc.models.stats.useQuery({});
+  const { data: providers, refetch } = trpc.models.list.useQuery();
+  const { data: stats } = trpc.models.stats.useQuery();
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">

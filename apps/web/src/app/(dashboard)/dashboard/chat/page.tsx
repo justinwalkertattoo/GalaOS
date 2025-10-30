@@ -6,7 +6,8 @@ import { Send } from 'lucide-react';
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  type Msg = { role: 'system' | 'user' | 'assistant'; content: string };
+  const [messages, setMessages] = useState<Array<Msg>>([]);
 
   const chatMutation = trpc.ai.chat.useMutation({
     onSuccess: (data: any) => {
@@ -18,7 +19,7 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage: Msg = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
 

@@ -28,7 +28,10 @@ export default function SetupPage() {
 
   const onSaveKey = async () => {
     if (!key) return;
-    await addKey.mutateAsync({ provider, name: provider, apiKey: key });
+    const p = provider.toLowerCase();
+    const known = ['anthropic','openai','buffer','instagram','sendgrid','stripe'] as const;
+    const type = (known as readonly string[]).includes(p) ? (p as any) : ('other' as any);
+    await addKey.mutateAsync({ name: provider, type, key });
     setKey('');
   };
 
@@ -77,4 +80,3 @@ export default function SetupPage() {
     </div>
   );
 }
-

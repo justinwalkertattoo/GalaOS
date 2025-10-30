@@ -11,8 +11,8 @@ export default function ToolsPage() {
   const [editingTool, setEditingTool] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const { data: tools, refetch } = trpc.tools.list.useQuery({});
-  const { data: stats } = trpc.tools.stats.useQuery({});
+  const { data: tools, refetch } = trpc.tools.list.useQuery();
+  const { data: stats } = trpc.tools.stats.useQuery();
 
   const categories = [
     { id: 'all', label: 'All Tools', icon: Wrench },
