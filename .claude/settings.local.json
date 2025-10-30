@@ -38,7 +38,8 @@
       "Bash(gh auth:*)",
       "Bash(gh run list:*)",
       "Bash(npm install:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(gh pr list:*)"
     ],
     "deny": [],
     "ask": []
