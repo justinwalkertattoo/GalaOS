@@ -16,6 +16,7 @@
     "@galaos/ai": "*",
     "@galaos/db": "*",
     "@galaos/integrations": "*",
+    "@galaos/mcp": "*",
     "@galaos/types": "*",
     "@galaos/workflow": "*",
     "@trpc/server": "^10.45.0",
