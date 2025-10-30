@@ -74,10 +74,10 @@ export class FileWatcher {
     });
 
     this.watcher
-      .on('add', (filePath) => this.handleChange('add', filePath))
-      .on('change', (filePath) => this.handleChange('change', filePath))
-      .on('unlink', (filePath) => this.handleChange('unlink', filePath))
-      .on('error', (error) => console.error('Watcher error:', error))
+      .on('add', (filePath: string) => this.handleChange('add', filePath))
+      .on('change', (filePath: string) => this.handleChange('change', filePath))
+      .on('unlink', (filePath: string) => this.handleChange('unlink', filePath))
+      .on('error', (error: Error) => console.error('Watcher error:', error))
       .on('ready', () => console.log('File watcher ready'));
   }
 
