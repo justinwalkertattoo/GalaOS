@@ -33,7 +33,9 @@
       "Bash(npx prisma:*)",
       "Bash(curl:*)",
       "Bash(gh pr view:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(npm run build:*)",
+      "Bash(gh auth:*)"
     ],
     "deny": [],
     "ask": []
