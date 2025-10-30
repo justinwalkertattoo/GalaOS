@@ -12,11 +12,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       localStorage.setItem('token', data.token);
       router.push('/dashboard');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       setError(error.message);
     },
   });

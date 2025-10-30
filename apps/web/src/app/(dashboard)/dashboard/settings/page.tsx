@@ -170,7 +170,7 @@ export default function SettingsPage() {
               </p>
             )}
 
-            {apiKeys?.map((key) => {
+            {apiKeys?.map((key: any) => {
               const testResult = testKeyMutation.data;
               const isTestingThis = testKeyMutation.isLoading;
 

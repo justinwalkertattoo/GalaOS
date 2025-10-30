@@ -85,7 +85,7 @@ export default function SkillsPage() {
       <div className="p-6">
         {viewMode === 'tree' ? (
           <div className="space-y-6">
-            {skillTree?.map((rootSkill) => (
+            {skillTree?.map((rootSkill: any) => (
               <SkillTreeNode
                 key={rootSkill.id}
                 skill={rootSkill}
@@ -122,7 +122,7 @@ export default function SkillsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {skillList?.map((skill) => (
+            {skillList?.map((skill: any) => (
               <SkillCard
                 key={skill.id}
                 skill={skill}

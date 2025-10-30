@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import { env } from './env';
 import { appRouter } from './router';
 import { createContext } from './context';
 import { logger, reqId } from './services/logger';
@@ -18,7 +19,7 @@ config();
 const app = express();
 initSentry();
 initOtel();
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT || 3001;
 
 // Middleware
 app.use(cors());

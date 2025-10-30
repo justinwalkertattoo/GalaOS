@@ -26,7 +26,7 @@ export default function ToolsPage() {
     { id: 'other', label: 'Other', icon: '🔧' },
   ];
 
-  const filteredTools = tools?.filter((tool) =>
+  const filteredTools = tools?.filter((tool: any) =>
     selectedCategory === 'all' ? true : tool.category === selectedCategory
   );
 
@@ -88,8 +88,8 @@ export default function ToolsPage() {
       {/* Category Filter */}
       <div className="p-6">
         <div className="flex flex-wrap gap-2 mb-6">
-          {categories.map((cat) => {
-            const Icon = typeof cat.icon === 'string' ? null : cat.icon;
+          {categories.map((cat: any) => {
+            const Icon: any = typeof cat.icon === 'string' ? null : cat.icon;
             return (
               <button
                 key={cat.id}
@@ -109,7 +109,7 @@ export default function ToolsPage() {
 
         {/* Tools Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredTools?.map((tool) => (
+          {filteredTools?.map((tool: any) => (
             <ToolCard
               key={tool.id}
               tool={tool}

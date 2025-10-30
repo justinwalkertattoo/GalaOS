@@ -10,7 +10,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 let prismaMetricsInstalled = false;
 if (!prismaMetricsInstalled) {
   try {
-    prisma.$use(async (params, next) => {
+    prisma.$use(async (
+      params: any,
+      next: (params: any) => Promise<any>
+    ) => {
       const start = Date.now();
       const result = await next(params);
       const duration = Date.now() - start;

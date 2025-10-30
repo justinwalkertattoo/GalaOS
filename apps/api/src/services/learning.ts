@@ -1,10 +1,10 @@
 import { prisma } from '@galaos/db';
 import { KnowledgeGraph } from '@galaos/ai/src/knowledge-graph';
-import { RAGSystem } from '@galaos/ai/src/vector-db';
+import { RAGSystem, VectorDatabase } from '@galaos/ai/src/vector-db';
 import { HallucinationGuard } from '@galaos/ai/src/hallucination-guard';
 
 const kg = new KnowledgeGraph();
-const rag = new RAGSystem();
+const rag = new RAGSystem(new VectorDatabase(), async (_text: string) => []);
 const guard = new HallucinationGuard(kg, rag);
 
 export async function processObservation(id: string) {

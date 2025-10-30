@@ -146,8 +146,8 @@ Always encourage creativity while considering practical constraints.`,
   };
 
   // Filter for assistants (could be marked with a tag or have specific characteristics)
-  const assistants = agents?.filter((a) =>
-    templates.some((t) => a.name === t.name)
+  const assistants = agents?.filter((a: any) =>
+    templates.some((t: any) => a.name === t.name)
   ) || [];
 
   return (
@@ -182,8 +182,8 @@ Always encourage creativity while considering practical constraints.`,
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {templates.map((template) => {
-            const isActive = assistants.some((a) => a.name === template.name);
+          {templates.map((template: any) => {
+            const isActive = assistants.some((a: any) => a.name === template.name);
 
             return (
               <div

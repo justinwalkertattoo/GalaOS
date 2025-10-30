@@ -50,7 +50,7 @@ export const usageRouter = router({
           const now = new Date();
           const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
           const monthEvents = await ctx.prisma.usageEvent.findMany({ where: { userId: ctx.user.id, createdAt: { gte: startOfMonth } } });
-          const monthUsd = monthEvents.reduce((s, e) => s + Number(e.costUsd), 0);
+          const monthUsd = monthEvents.reduce((s: number, e: any) => s + Number(e.costUsd), 0);
           const cap = Number(limits.monthlyUsdCap || 0);
           const thresholdPct = limits.alertThreshold || 80;
           if (cap > 0) {
@@ -77,9 +77,9 @@ export const usageRouter = router({
       const events = await ctx.prisma.usageEvent.findMany({
         where: { userId: ctx.user.id, createdAt: { gte: from } },
       });
-      const totalUsd = events.reduce((s, e) => s + Number(e.costUsd), 0);
-      const tokensIn = events.reduce((s, e) => s + e.tokensIn, 0);
-      const tokensOut = events.reduce((s, e) => s + e.tokensOut, 0);
+      const totalUsd = events.reduce((s: number, e: any) => s + Number(e.costUsd), 0);
+      const tokensIn = events.reduce((s: number, e: any) => s + e.tokensIn, 0);
+      const tokensOut = events.reduce((s: number, e: any) => s + e.tokensOut, 0);
       // Simple monthly forecast: daily avg * days remaining
       let forecast = 0;
       if ((input?.range ?? 'day') === 'month') {
@@ -156,11 +156,11 @@ export const usageRouter = router({
       }
 
       const monthly = await ctx.prisma.usageEvent.findMany({ where: { userId: ctx.user.id, createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } } });
-      const monthUsd = monthly.reduce((s, e) => s + Number(e.costUsd), 0);
+      const monthUsd = monthly.reduce((s: number, e: any) => s + Number(e.costUsd), 0);
 
       const contextObj = {
         period: { from: from.toISOString(), to: now.toISOString() },
-        totalUsd30d: Object.values(byProv).reduce((s, v)=> s+v.totalUsd, 0),
+        totalUsd30d: Object.values(byProv).reduce((s: number, v: any)=> s+v.totalUsd, 0),
         totalUsdMonth: monthUsd,
         providers: byProv,
         focus: input?.focus || ''

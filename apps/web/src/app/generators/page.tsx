@@ -31,7 +31,7 @@ export default function GeneratorsPage() {
           <p className="text-muted-foreground">Loading…</p>
         ) : (
           <ul className="list-disc pl-5 text-sm">
-            {list.data?.generators.map((g) => (
+            {list.data?.generators.map((g: any) => (
               <li key={g.name}>
                 <span className="font-medium">{g.name}</span> — {g.description}
               </li>
@@ -131,4 +131,3 @@ export default function GeneratorsPage() {
     </div>
   );
 }
-

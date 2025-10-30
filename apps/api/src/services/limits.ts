@@ -10,13 +10,13 @@ export async function checkUserLimits(userId: string): Promise<{ allowed: boolea
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
   const dayEvents = await prisma.usageEvent.findMany({ where: { userId, createdAt: { gte: startOfDay } } });
-  const dayUsd = dayEvents.reduce((s, e) => s + Number(e.costUsd), 0);
+  const dayUsd = dayEvents.reduce((s: number, e: any) => s + Number(e.costUsd), 0);
   if (Number(limits.dailyUsdCap) > 0 && dayUsd >= Number(limits.dailyUsdCap)) {
     return { allowed: false, reason: 'Daily budget reached' };
   }
 
   const monthEvents = await prisma.usageEvent.findMany({ where: { userId, createdAt: { gte: startOfMonth } } });
-  const monthUsd = monthEvents.reduce((s, e) => s + Number(e.costUsd), 0);
+  const monthUsd = monthEvents.reduce((s: number, e: any) => s + Number(e.costUsd), 0);
   if (Number(limits.monthlyUsdCap) > 0 && monthUsd >= Number(limits.monthlyUsdCap)) {
     return { allowed: false, reason: 'Monthly budget reached' };
   }

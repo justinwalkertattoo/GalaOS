@@ -24,13 +24,13 @@ export default function GalaPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const galaMutation = trpc.orchestration.gala.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
     },
   });
 
   const createPlanMutation = trpc.orchestration.createPlan.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setOrchestrationPlan(data);
       const stepsText = data.steps
         .map((step: any, i: number) => {
@@ -51,7 +51,7 @@ export default function GalaPage() {
   });
 
   const executePlanMutation = trpc.orchestration.executePlan.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setMessages((prev) => [
         ...prev,
         {

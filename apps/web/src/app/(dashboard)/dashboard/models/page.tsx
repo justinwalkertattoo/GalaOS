@@ -89,12 +89,12 @@ export default function ModelsPage() {
         {/* Providers List */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {providers
-            ?.filter((p) => p.type === selectedType)
-            .map((provider) => (
+            ?.filter((p: any) => p.type === selectedType)
+            .map((provider: any) => (
               <ProviderCard key={provider.id} provider={provider} onUpdate={() => refetch()} />
             ))}
 
-          {providers?.filter((p) => p.type === selectedType).length === 0 && (
+          {providers?.filter((p: any) => p.type === selectedType).length === 0 && (
             <div className="col-span-2 text-center py-12 bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
               <Server className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
@@ -196,17 +196,17 @@ function ProviderCard({ provider, onUpdate }: { provider: any; onUpdate: () => v
     }
   };
 
-  const statusIcon = {
+  const statusIcon = ({
     online: <CheckCircle2 className="w-5 h-5 text-green-500" />,
     offline: <XCircle className="w-5 h-5 text-red-500" />,
     unknown: <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />,
-  }[provider.status] || <XCircle className="w-5 h-5 text-gray-400" />;
+  } as any)[provider.status as any] || <XCircle className="w-5 h-5 text-gray-400" />;
 
-  const typeIcon = {
+  const typeIcon = ({
     cloud: <Cloud className="w-5 h-5 text-blue-500" />,
     ollama: <Server className="w-5 h-5 text-green-500" />,
     docker: <Container className="w-5 h-5 text-purple-500" />,
-  }[provider.type];
+  } as any)[provider.type as any];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-gray-700 p-6">
@@ -312,7 +312,7 @@ function AddProviderModal({
   const [formData, setFormData] = useState({
     name: '',
     type: initialType,
-    provider: 'ollama' as const,
+    provider: 'ollama' as any,
     baseUrl: 'http://localhost:11434',
     containerName: '',
     model: '',

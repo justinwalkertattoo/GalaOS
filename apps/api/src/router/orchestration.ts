@@ -87,8 +87,10 @@ export const orchestrationRouter = router({
         const summary = JSON.stringify(plan.intent);
         const { HallucinationGuard, verifyBeforeResponse } = await import('@galaos/ai/src/hallucination-guard');
         const { KnowledgeGraph } = await import('@galaos/ai/src/knowledge-graph');
-        const { RAGSystem } = await import('@galaos/ai/src/vector-db');
-        const guard = new HallucinationGuard(new KnowledgeGraph(), new RAGSystem());
+        const { RAGSystem, VectorDatabase } = await import('@galaos/ai/src/vector-db');
+        const vectorDb = new VectorDatabase();
+        const embed = async (_text: string) => [] as number[];
+        const guard = new HallucinationGuard(new KnowledgeGraph(), new RAGSystem(vectorDb, embed));
         await verifyBeforeResponse(summary, guard);
       } catch {}
 
@@ -252,8 +254,10 @@ export const orchestrationRouter = router({
       try {
         const { HallucinationGuard, verifyBeforeResponse } = await import('@galaos/ai/src/hallucination-guard');
         const { KnowledgeGraph } = await import('@galaos/ai/src/knowledge-graph');
-        const { RAGSystem } = await import('@galaos/ai/src/vector-db');
-        const guard = new HallucinationGuard(new KnowledgeGraph(), new RAGSystem());
+        const { RAGSystem, VectorDatabase } = await import('@galaos/ai/src/vector-db');
+        const vectorDb = new VectorDatabase();
+        const embed = async (_text: string) => [] as number[];
+        const guard = new HallucinationGuard(new KnowledgeGraph(), new RAGSystem(vectorDb, embed));
         const verified = await verifyBeforeResponse(response, guard, { userId: ctx.user?.id });
         return { response: verified.response, verification: verified.verification };
       } catch {

@@ -22,7 +22,7 @@ export default function SandboxPage() {
   const { data: sandboxes, refetch } = trpc.sandbox.list.useQuery({});
   const { data: stats } = trpc.sandbox.stats.useQuery({});
 
-  const activeSandbox = sandboxes?.find((s) => s.id === selectedSandbox);
+  const activeSandbox = sandboxes?.find((s: any) => s.id === selectedSandbox);
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -67,7 +67,7 @@ export default function SandboxPage() {
               Your Sandboxes
             </h2>
             <div className="space-y-2">
-              {sandboxes?.map((sandbox) => (
+              {sandboxes?.map((sandbox: any) => (
                 <button
                   key={sandbox.id}
                   onClick={() => setSelectedSandbox(sandbox.id)}
@@ -493,7 +493,7 @@ function CreateSandboxModal({
   });
 
   const createMutation = trpc.sandbox.create.useMutation({
-    onSuccess: (data) => onCreated(data.id),
+    onSuccess: (data: any) => onCreated(data.id),
   });
 
   const handleSubmit = (e: React.FormEvent) => {

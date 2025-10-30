@@ -31,7 +31,7 @@ export default function IntegrationsPage() {
 
   const connectedByProvider = useMemo(() => {
     const map = new Map<string, boolean>();
-    connections.forEach((c) => map.set(c.providerId, true));
+    connections.forEach((c: any) => map.set(c.providerId, true));
     return map;
   }, [connections]);
 
@@ -67,7 +67,7 @@ export default function IntegrationsPage() {
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Available Providers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {providers.map((p) => (
+            {providers.map((p: any) => (
               <div key={p.id} className="border border-gray-200 dark:border-gray-700 rounded p-4 flex items-center justify-between">
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">{p.name}</div>
@@ -130,7 +130,7 @@ export default function IntegrationsPage() {
             {connections.length === 0 && (
               <div className="text-sm text-gray-600 dark:text-gray-400">No active connections yet.</div>
             )}
-            {connections.map((c) => (
+            {connections.map((c: any) => (
               <div key={c.id} className="border border-gray-200 dark:border-gray-700 rounded p-4 flex items-center justify-between">
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">{c.providerName}</div>
@@ -150,4 +150,3 @@ export default function IntegrationsPage() {
     </div>
   );
 }
-

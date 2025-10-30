@@ -137,7 +137,7 @@ export class HallucinationGuard {
       }
 
       // Check for contradictions
-      const contradictions = await this.ragSystem.detectContradictions(claim.claim, 0.85);
+      const contradictions = await this.ragSystem.detectContradictions(claim.claim);
 
       if (contradictions.length > 0) {
         result.contradictions = contradictions.map(

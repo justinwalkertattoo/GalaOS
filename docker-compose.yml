@@ -85,8 +85,9 @@ services:
       # Other
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_here}
       NODE_ENV: production
+      PORT: 3001
     ports:
-      - "4000:4000"
+      - "3001:3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,7 +111,7 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: galaos-web
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_API_URL: http://localhost:3001/trpc
       NODE_ENV: production
     ports:
       - "3000:3000"

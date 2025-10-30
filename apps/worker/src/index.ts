@@ -1,4 +1,5 @@
 import { Worker, Queue, Job } from 'bullmq';
+import { env } from './env';
 import Redis from 'ioredis';
 import axios from 'axios';
 import FormData from 'form-data';
@@ -22,7 +23,7 @@ const logger = winston.createLogger({
 });
 
 // Redis connection
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const connection = new Redis(env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 

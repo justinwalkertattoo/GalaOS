@@ -13,7 +13,9 @@ export const agentExecRouter = router({
     .mutation( async ({ ctx, input }) => {
       const decision = decide(ctx, 'shell.exec', input.cmd);
       writeAudit(ctx, { action: 'shell.exec', input, decision });
-      if (!decision.allow && !(input.override && isSuperUser(ctx))) return { ok: false as const, error: decision.reason || 'Denied' };
+      // Restrict overrides to admins only. Non-admin override is ignored.
+      const allow = decision.allow || (Boolean(input.override) && isSuperUser(ctx));
+      if (!allow) return { ok: false as const, error: decision.reason || 'Denied' };
       const res = await runCommand(input.cmd, input.args, { cwd: input.cwd, timeoutMs: input.timeoutMs });
       writeAudit(ctx, { action: 'shell.exec.result', input, result: { code: res.code } });
       return { ok: res.code === 0 as const, ...res };
@@ -24,7 +26,8 @@ export const agentExecRouter = router({
     .mutation(({ ctx, input }) => {
       const decision = decide(ctx, 'files.read', input.path);
       writeAudit(ctx, { action: 'files.read', input, decision });
-      if (!decision.allow && !(input.override && isSuperUser(ctx))) return { ok: false as const, error: decision.reason || 'Denied' };
+      const allow = decision.allow || (Boolean(input.override) && isSuperUser(ctx));
+      if (!allow) return { ok: false as const, error: decision.reason || 'Denied' };
       const res = safeRead(input.path, Boolean(input.override && isSuperUser(ctx)));
       writeAudit(ctx, { action: 'files.read.result', input, result: { ok: res.ok } });
       return res;
@@ -35,7 +38,8 @@ export const agentExecRouter = router({
     .mutation(({ ctx, input }) => {
       const decision = decide(ctx, 'files.write', input.path);
       writeAudit(ctx, { action: 'files.write', input: { path: input.path, size: input.content.length }, decision });
-      if (!decision.allow && !(input.override && isSuperUser(ctx))) return { ok: false as const, error: decision.reason || 'Denied' };
+      const allow = decision.allow || (Boolean(input.override) && isSuperUser(ctx));
+      if (!allow) return { ok: false as const, error: decision.reason || 'Denied' };
       const res = safeWrite(input.path, input.content, Boolean(input.override && isSuperUser(ctx)));
       writeAudit(ctx, { action: 'files.write.result', input: { path: input.path }, result: res });
       return res;
@@ -46,7 +50,8 @@ export const agentExecRouter = router({
     .mutation(({ ctx, input }) => {
       const decision = decide(ctx, 'files.move', `${input.src} -> ${input.dest}`);
       writeAudit(ctx, { action: 'files.move', input, decision });
-      if (!decision.allow && !(input.override && isSuperUser(ctx))) return { ok: false as const, error: decision.reason || 'Denied' };
+      const allow = decision.allow || (Boolean(input.override) && isSuperUser(ctx));
+      if (!allow) return { ok: false as const, error: decision.reason || 'Denied' };
       const res = safeMove(input.src, input.dest, Boolean(input.override && isSuperUser(ctx)));
       writeAudit(ctx, { action: 'files.move.result', input, result: res });
       return res;
@@ -57,7 +62,8 @@ export const agentExecRouter = router({
     .mutation(({ ctx, input }) => {
       const decision = decide(ctx, 'files.delete', input.path);
       writeAudit(ctx, { action: 'files.delete', input, decision });
-      if (!decision.allow && !(input.override && isSuperUser(ctx))) return { ok: false as const, error: decision.reason || 'Denied' };
+      const allow = decision.allow || (Boolean(input.override) && isSuperUser(ctx));
+      if (!allow) return { ok: false as const, error: decision.reason || 'Denied' };
       const res = safeDelete(input.path, Boolean(input.override && isSuperUser(ctx)));
       writeAudit(ctx, { action: 'files.delete.result', input, result: res });
       return res;

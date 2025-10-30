@@ -43,7 +43,7 @@ function FsPanel() {
   const [content, setContent] = React.useState("");
   const [moveTo, setMoveTo] = React.useState("");
   const [override, setOverride] = React.useState(false);
-  const read = trpc.agentExec.readFile.useMutation({ onSuccess: (d)=> d.content && setContent(d.content) });
+  const read = trpc.agentExec.readFile.useMutation({ onSuccess: (d: any)=> d.content && setContent(d.content) });
   const write = trpc.agentExec.writeFile.useMutation();
   const remove = trpc.agentExec.remove.useMutation();
   const move = trpc.agentExec.move.useMutation();

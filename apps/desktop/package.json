@@ -1,0 +1,16 @@
+{
+  "name": "@galaos/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "description": "GalaOS Desktop wrapper (Electron)",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}
+

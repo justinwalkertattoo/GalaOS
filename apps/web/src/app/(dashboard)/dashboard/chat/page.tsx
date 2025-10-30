@@ -9,7 +9,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
 
   const chatMutation = trpc.ai.chat.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setMessages((prev) => [...prev, data.message]);
     },
   });

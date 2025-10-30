@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: 'AI-powered operating system for unifying apps, software and services',
 };
 
+// Force dynamic rendering to avoid prerendering client pages using React Query/tRPC
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>

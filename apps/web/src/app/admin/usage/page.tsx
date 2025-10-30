@@ -96,7 +96,7 @@ export default function UsageAdminPage() {
         <h2 className="font-medium">Provider / Model Breakdown (Month)</h2>
         {breakdown.data ? (
           <div className="text-sm space-y-2">
-            {Object.entries(breakdown.data).map(([prov, info]) => (
+            {Object.entries(breakdown.data as any).map(([prov, info]: any) => (
               <div key={prov} className="border rounded p-2">
                 <div className="font-medium flex items-center gap-2">
                   {prov} — ${info.totalUsd.toFixed(4)}
@@ -110,7 +110,7 @@ export default function UsageAdminPage() {
                   />
                 </div>
                 <ul className="pl-5 list-disc">
-                  {Object.entries(info.models).map(([model, usd]) => (
+                  {Object.entries((info as any).models).map(([model, usd]: any) => (
                     <li key={model} className="flex items-center gap-2">
                       <span>{model}: ${usd.toFixed(4)}</span>
                       <ExplainHover

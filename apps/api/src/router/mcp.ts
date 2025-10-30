@@ -26,10 +26,10 @@ export const mcpRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const servers = await ctx.db.mCPServer.findMany({
+      const servers = await ctx.prisma.mCPServer.findMany({
         where: input.includeSystem
           ? undefined
-          : { userId: ctx.session.user.id },
+          : { userId: ctx.user.id },
         include: {
           resources: true,
           tools: true,
@@ -50,7 +50,7 @@ export const mcpRouter = router({
   getServer: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.findUnique({
+      const server = await ctx.prisma.mCPServer.findUnique({
         where: { id: input.id },
         include: {
           resources: true,
@@ -75,9 +75,9 @@ export const mcpRouter = router({
   registerServer: protectedProcedure
     .input(MCPServerConfigSchema)
     .mutation(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.create({
+      const server = await ctx.prisma.mCPServer.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           name: input.name,
           description: input.description,
           command: input.command,
@@ -107,7 +107,7 @@ export const mcpRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.findUnique({
+      const server = await ctx.prisma.mCPServer.findUnique({
         where: { id: input.id },
       });
 
@@ -118,14 +118,14 @@ export const mcpRouter = router({
         });
       }
 
-      if (server.userId && server.userId !== ctx.session.user.id) {
+      if (server.userId && server.userId !== ctx.user.id) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not authorized to update this server',
         });
       }
 
-      const updated = await ctx.db.mCPServer.update({
+      const updated = await ctx.prisma.mCPServer.update({
         where: { id: input.id },
         data: input.data,
       });
@@ -139,7 +139,7 @@ export const mcpRouter = router({
   deleteServer: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.findUnique({
+      const server = await ctx.prisma.mCPServer.findUnique({
         where: { id: input.id },
       });
 
@@ -150,14 +150,14 @@ export const mcpRouter = router({
         });
       }
 
-      if (server.userId && server.userId !== ctx.session.user.id) {
+      if (server.userId && server.userId !== ctx.user.id) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not authorized to delete this server',
         });
       }
 
-      await ctx.db.mCPServer.delete({
+      await ctx.prisma.mCPServer.delete({
         where: { id: input.id },
       });
 
@@ -172,7 +172,7 @@ export const mcpRouter = router({
   startServer: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.findUnique({
+      const server = await ctx.prisma.mCPServer.findUnique({
         where: { id: input.id },
       });
 
@@ -185,7 +185,7 @@ export const mcpRouter = router({
 
       // TODO: Trigger MCP registry to start the server
 
-      await ctx.db.mCPServer.update({
+      await ctx.prisma.mCPServer.update({
         where: { id: input.id },
         data: { status: 'starting' },
       });
@@ -199,7 +199,7 @@ export const mcpRouter = router({
   stopServer: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.findUnique({
+      const server = await ctx.prisma.mCPServer.findUnique({
         where: { id: input.id },
       });
 
@@ -212,7 +212,7 @@ export const mcpRouter = router({
 
       // TODO: Trigger MCP registry to stop the server
 
-      await ctx.db.mCPServer.update({
+      await ctx.prisma.mCPServer.update({
         where: { id: input.id },
         data: { status: 'stopped' },
       });
@@ -226,7 +226,7 @@ export const mcpRouter = router({
   restartServer: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const server = await ctx.db.mCPServer.findUnique({
+      const server = await ctx.prisma.mCPServer.findUnique({
         where: { id: input.id },
       });
 
@@ -239,7 +239,7 @@ export const mcpRouter = router({
 
       // TODO: Trigger MCP registry to restart the server
 
-      await ctx.db.mCPServer.update({
+      await ctx.prisma.mCPServer.update({
         where: { id: input.id },
         data: { status: 'restarting' },
       });
@@ -257,7 +257,7 @@ export const mcpRouter = router({
   listResources: protectedProcedure
     .input(z.object({ serverId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const resources = await ctx.db.mCPResource.findMany({
+      const resources = await ctx.prisma.mCPResource.findMany({
         where: { serverId: input.serverId },
         orderBy: { createdAt: 'desc' },
       });
@@ -280,7 +280,7 @@ export const mcpRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const tool = await ctx.db.mCPTool.findFirst({
+      const tool = await ctx.prisma.mCPTool.findFirst({
         where: {
           serverId: input.serverId,
           name: input.toolName,
@@ -296,7 +296,7 @@ export const mcpRouter = router({
 
       // TODO: Call the actual MCP tool via registry
       // For now, just update usage stats
-      await ctx.db.mCPTool.update({
+      await ctx.prisma.mCPTool.update({
         where: { id: tool.id },
         data: {
           usageCount: { increment: 1 },
@@ -328,7 +328,7 @@ export const mcpRouter = router({
     .query(async ({ ctx, input }) => {
       // TODO: Implement actual HuggingFace search via provider
       // For now, return from database
-      const resources = await ctx.db.huggingFaceResource.findMany({
+      const resources = await ctx.prisma.huggingFaceResource.findMany({
         where: {
           type: input.type,
           OR: [
@@ -358,7 +358,7 @@ export const mcpRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const resources = await ctx.db.huggingFaceResource.findMany({
+      const resources = await ctx.prisma.huggingFaceResource.findMany({
         where: {
           type: 'model',
           author: input.author,
@@ -395,7 +395,7 @@ export const mcpRouter = router({
     )
     .query(async ({ ctx, input }) => {
       // TODO: Implement actual GitHub search via provider
-      const resources = await ctx.db.gitHubResource.findMany({
+      const resources = await ctx.prisma.gitHubResource.findMany({
         where: {
           type: input.type,
           OR: [
@@ -427,7 +427,7 @@ export const mcpRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const models = await ctx.db.ollamaModel.findMany({
+      const models = await ctx.prisma.ollamaModel.findMany({
         where: {
           providerId: input.providerId,
           isAvailable: true,
@@ -471,7 +471,7 @@ export const mcpRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const model = await ctx.db.ollamaModel.findUnique({
+      const model = await ctx.prisma.ollamaModel.findUnique({
         where: { id: input.id },
       });
 
@@ -484,7 +484,7 @@ export const mcpRouter = router({
 
       // TODO: Call Ollama provider to delete model
 
-      await ctx.db.ollamaModel.delete({
+      await ctx.prisma.ollamaModel.delete({
         where: { id: input.id },
       });
 
@@ -499,8 +499,8 @@ export const mcpRouter = router({
    * List API keys
    */
   listAPIKeys: protectedProcedure.query(async ({ ctx }) => {
-    const keys = await ctx.db.providerAPIKey.findMany({
-      where: { userId: ctx.session.user.id },
+    const keys = await ctx.prisma.providerAPIKey.findMany({
+      where: { userId: ctx.user.id },
       select: {
         id: true,
         provider: true,
@@ -535,9 +535,9 @@ export const mcpRouter = router({
     .mutation(async ({ ctx, input }) => {
       // TODO: Encrypt the API key before storing
 
-      const key = await ctx.db.providerAPIKey.create({
+      const key = await ctx.prisma.providerAPIKey.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           provider: input.provider,
           name: input.name,
           apiKey: input.apiKey, // Should be encrypted
@@ -563,7 +563,7 @@ export const mcpRouter = router({
   deleteAPIKey: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const key = await ctx.db.providerAPIKey.findUnique({
+      const key = await ctx.prisma.providerAPIKey.findUnique({
         where: { id: input.id },
       });
 
@@ -574,14 +574,14 @@ export const mcpRouter = router({
         });
       }
 
-      if (key.userId !== ctx.session.user.id) {
+      if (key.userId !== ctx.user.id) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not authorized to delete this key',
         });
       }
 
-      await ctx.db.providerAPIKey.delete({
+      await ctx.prisma.providerAPIKey.delete({
         where: { id: input.id },
       });
 
@@ -594,7 +594,7 @@ export const mcpRouter = router({
   testAPIKey: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const key = await ctx.db.providerAPIKey.findUnique({
+      const key = await ctx.prisma.providerAPIKey.findUnique({
         where: { id: input.id },
       });
 
@@ -605,7 +605,7 @@ export const mcpRouter = router({
         });
       }
 
-      if (key.userId !== ctx.session.user.id) {
+      if (key.userId !== ctx.user.id) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Not authorized to test this key',
