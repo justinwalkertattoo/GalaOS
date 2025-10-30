@@ -2,6 +2,8 @@ import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import path from "path";
 import { spawn } from "child_process";
+import { decide } from "../services/policy";
+import { writeAudit } from "../services/audit-log";
 
 // Whitelist available generators to prevent arbitrary execution
 const ALLOWED_GENERATORS = ["new-package", "nextjs-feature"] as const;
@@ -26,6 +28,34 @@ function runTurboGenRaw(args: Record<string, unknown>): Promise<{ code: number; 
 }
 
 export const generatorsRouter = router({
+  // Create a new generator template (guarded)
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).regex(/^[a-zA-Z0-9-_.]+$/),
+        description: z.string().default("")
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const decision = decide(ctx, "generators.create", input.name);
+      writeAudit(ctx, { action: "generators.create", resource: input.name, input, decision });
+      if (!decision.allow) {
+        return { ok: false as const, reason: decision.reason || "Denied" };
+      }
+
+      // Scaffold a minimal directory for a new generator (no actions/templates yet)
+      const fs = await import('fs');
+      const path = await import('path');
+      const base = path.join(process.cwd(), 'turbo', 'generators', 'templates', input.name);
+      fs.mkdirSync(base, { recursive: true });
+      // Create a README placeholder to guide future edits
+      const readme = path.join(base, 'README.md');
+      if (!fs.existsSync(readme)) {
+        fs.writeFileSync(readme, `# ${input.name}\n\n${input.description}\n`);
+      }
+      writeAudit(ctx, { action: "generators.create.result", resource: input.name, result: { ok: true } });
+      return { ok: true as const };
+    }),
   list: protectedProcedure.query(() => {
     return {
       generators: ALLOWED_GENERATORS.map((name) => ({
@@ -58,7 +88,12 @@ export const generatorsRouter = router({
         }),
       ])
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const decision = decide(ctx, "generators.run", input.name);
+      writeAudit(ctx, { action: "generators.run", resource: input.name, input, decision });
+      if (!decision.allow) {
+        return { ok: false as const, code: 1, stdout: "", stderr: decision.reason || "Denied" };
+      }
       if (!ALLOWED_GENERATORS.includes(input.name as any)) {
         throw new Error("Generator not allowed");
       }
@@ -69,11 +104,8 @@ export const generatorsRouter = router({
         ...params,
       });
 
-      if (code !== 0) {
-        return { ok: false as const, code, stderr, stdout };
-      }
-
-      return { ok: true as const, code, stdout };
+      const ok = code === 0;
+      writeAudit(ctx, { action: "generators.run.result", resource: input.name, input, result: { ok, code } });
+      return ok ? { ok: true as const, code, stdout } : { ok: false as const, code, stderr, stdout };
     }),
 });
-

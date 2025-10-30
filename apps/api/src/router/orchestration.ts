@@ -57,6 +57,41 @@ async function createUserOrchestrator(ctx: any): Promise<AIOrchestrator> {
 }
 
 export const orchestrationRouter = router({
+  // Analyze + plan + audit in one call
+  planWithAudit: protectedProcedure
+    .input(
+      z.object({
+        message: z.string(),
+        context: z.any().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const orchestrator = await createUserOrchestrator(ctx);
+      const plan = await orchestrator.createOrchestrationPlan(input.message, input.context);
+
+      // Available generator names mirror the whitelist in generators router
+      const availableGenerators = ['new-package', 'nextjs-feature'];
+
+      const audit = await orchestrator.selfAudit(input.message, input.context, {
+        availableGenerators,
+        env: {
+          ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+          OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+        },
+      });
+
+      // Optional: verify plan summary text via guard (lightweight)
+      try {
+        const summary = JSON.stringify(plan.intent);
+        const { HallucinationGuard, verifyBeforeResponse } = await import('@galaos/ai/src/hallucination-guard');
+        const { KnowledgeGraph } = await import('@galaos/ai/src/knowledge-graph');
+        const { RAGSystem } = await import('@galaos/ai/src/vector-db');
+        const guard = new HallucinationGuard(new KnowledgeGraph(), new RAGSystem());
+        await verifyBeforeResponse(summary, guard);
+      } catch {}
+
+      return { plan, audit };
+    }),
   // Analyze user intent
   analyzeIntent: protectedProcedure
     .input(
@@ -190,7 +225,18 @@ export const orchestrationRouter = router({
     .mutation(async ({ ctx, input }) => {
       const orchestrator = await createUserOrchestrator(ctx);
       const response = await orchestrator.gala(input.message, input.context);
-      return { response };
+      // Hallucination guard verification wrapper
+      try {
+        const { HallucinationGuard, verifyBeforeResponse } = await import('@galaos/ai/src/hallucination-guard');
+        const { KnowledgeGraph } = await import('@galaos/ai/src/knowledge-graph');
+        const { RAGSystem } = await import('@galaos/ai/src/vector-db');
+        const guard = new HallucinationGuard(new KnowledgeGraph(), new RAGSystem());
+        const verified = await verifyBeforeResponse(response, guard, { userId: ctx.user?.id });
+        return { response: verified.response, verification: verified.verification };
+      } catch {
+        // If guard init fails, return raw response
+        return { response };
+      }
     }),
 
   // List registered agents

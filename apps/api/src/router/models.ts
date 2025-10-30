@@ -2,6 +2,8 @@ import { router, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { OllamaProvider, DockerModelProvider } from '@galaos/ai/src/providers';
+import { decide } from '../services/policy';
+import { writeAudit } from '../services/audit-log';
 
 const createModelProviderSchema = z.object({
   name: z.string().min(1).max(100),
@@ -46,6 +48,9 @@ export const modelsRouter = router({
   create: protectedProcedure
     .input(createModelProviderSchema)
     .mutation(async ({ ctx, input }) => {
+      const decision = decide(ctx, 'files.write', 'models.provider');
+      writeAudit(ctx, { action: 'models.create', input, decision });
+      if (!decision.allow) throw new TRPCError({ code: 'FORBIDDEN', message: decision.reason });
       const provider = await ctx.prisma.modelProvider.create({
         data: {
           ...input,
@@ -171,8 +176,11 @@ export const modelsRouter = router({
         modelName: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
+        const decision = decide(ctx, 'packages.install', `ollama:${input.modelName}`);
+        writeAudit(ctx, { action: 'models.ollama.pull', input, decision });
+        if (!decision.allow) return { success: false, message: decision.reason || 'Denied' };
         const ollama = new OllamaProvider(input.baseUrl);
         await ollama.pullModel(input.modelName);
 

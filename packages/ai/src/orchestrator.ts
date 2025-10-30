@@ -2,6 +2,7 @@ import { Agent } from './agent';
 import { AgentConfig, TaskIntent, OrchestrationPlan, WorkflowStep, Message, AIProvider } from './types';
 import { ToolRegistry, globalToolRegistry } from './tool-registry';
 import { ProviderConfig } from './providers';
+import { CapabilityAuditor, CapabilityAuditResult } from './capability-audit';
 import { z } from 'zod';
 
 export interface OrchestratorConfig {
@@ -16,6 +17,7 @@ export class AIOrchestrator {
   private agents: Map<string, Agent> = new Map();
   private toolRegistry: ToolRegistry;
   private routerAgent: Agent;
+  private auditor: CapabilityAuditor;
 
   constructor(private config: OrchestratorConfig) {
     this.toolRegistry = globalToolRegistry;
@@ -49,6 +51,9 @@ Always respond with structured analysis of the task.`,
       routerProviderConfig,
       this.toolRegistry
     );
+
+    // Initialize capability auditor
+    this.auditor = new CapabilityAuditor(this.toolRegistry);
   }
 
   private createProviderConfig(provider: AIProvider, modelName?: string): ProviderConfig {
@@ -205,6 +210,27 @@ Respond in JSON format with: intent, entities, requiredTools, confidence`;
       steps,
       estimatedDuration: this.estimateDuration(steps),
     };
+  }
+
+  /**
+   * Self-audit: given user input, analyze intent and audit capabilities.
+   */
+  async selfAudit(
+    userInput: string,
+    context?: any,
+    options?: { availableGenerators?: string[]; env?: Record<string, string | undefined> }
+  ): Promise<CapabilityAuditResult> {
+    const intent = await this.analyzeIntent(userInput, context);
+    const providers = {
+      anthropic: Boolean(this.config.anthropicApiKey),
+      openai: Boolean(this.config.openaiApiKey),
+      ollama: Boolean(this.config.ollamaBaseUrl),
+    };
+    return this.auditor.audit(intent, {
+      availableGenerators: options?.availableGenerators,
+      env: options?.env,
+      providers,
+    });
   }
 
   private async generateWorkflowSteps(

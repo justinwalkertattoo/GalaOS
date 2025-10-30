@@ -19,6 +19,8 @@ import { toolsRouter } from './tools';
 import { skillsRouter } from './skills';
 import { crewAIRouter } from './crewai';
 import { mcpRouter } from './mcp';
+import { generatorsRouter } from './generators';
+import { systemRouter } from './system';
 
 export const appRouter = router({
   auth: authRouter,
@@ -41,6 +43,8 @@ export const appRouter = router({
   tools: toolsRouter,
   skills: skillsRouter,
   mcp: mcpRouter,
+  generators: generatorsRouter,
+  system: systemRouter,
 });
 
 export type AppRouter = typeof appRouter;
