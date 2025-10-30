@@ -29,7 +29,7 @@ cd GalaOS
 ### 2. Set Up Environment Variables
 
 ```bash
-cp .env.example .env
+cp .env.template .env
 ```
 
 Edit `.env` and add your API keys:

@@ -1,3 +1,3 @@
 import { createTRPCReact } from '@trpc/react-query';
-import type { AppRouter } from '../../../api/dist/router';
+import type { AppRouter } from '@galaos/api';
 export const trpc = createTRPCReact<AppRouter>();

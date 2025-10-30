@@ -36,6 +36,18 @@
       <div class="row">Ready: <span id="ready">unknown</span></div>
     </div>
 
+    <div class="card">
+      <h2 class="font-medium mb-2">Hardware & Performance</h2>
+      <div class="row">
+        <button id="hwOne">Scan Now</button>
+        <button id="hwMonStart" class="secondary">Start Monitor</button>
+        <button id="hwMonStop" class="secondary">Stop Monitor</button>
+        <button id="hwDrivers">Driver Check</button>
+        <button id="hwRecs">Get Recommendations</button>
+      </div>
+      <pre id="hwOut" class="text-sm" style="max-height:260px; overflow:auto; background:#f8f8f8; padding:8px; border-radius:6px; border:1px solid #eee"></pre>
+    </div>
+
     <script>
       const $ = (id) => document.getElementById(id);
       const apiBase = 'http://127.0.0.1:3001';
@@ -52,7 +64,14 @@
           const rd = await fetch(apiBase + '/ready'); $('ready').textContent = rd.ok ? 'ok' : 'error:'+rd.status; $('ready').className = rd.ok? 'ok':'err';
         } catch { $('ready').textContent = 'error'; $('ready').className = 'err'; }
       };
+
+      function show(obj) { $('hwOut').textContent = JSON.stringify(obj, null, 2); }
+      $('hwOne').onclick = async () => { const res = await window.electron.hwGetMetrics(); show(res); };
+      $('hwMonStart').onclick = async () => { await window.electron.hwMonitorStart(3000); };
+      $('hwMonStop').onclick = async () => { await window.electron.hwMonitorStop(); };
+      $('hwDrivers').onclick = async () => { const res = await window.electron.hwScanDrivers(); show(res); };
+      $('hwRecs').onclick = async () => { const res = await window.electron.hwRecommendations(); show(res); };
+      window.electron.onHardwareMetrics((data) => { show({ stream: true, data }); });
     </script>
   </body>
   </html>
-

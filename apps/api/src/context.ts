@@ -1,5 +1,5 @@
 import { CreateExpressContextOptions } from '@trpc/server/adapters/express';
-import { prisma } from '@galaos/db';
+import { prisma, prismaRead } from '@galaos/db';
 import { dbQueryDurationMs } from './services/metrics';
 import jwt from 'jsonwebtoken';
 import { JWTPayload } from '@galaos/types';
@@ -53,6 +53,7 @@ export const createContext = async ({ req, res }: CreateExpressContextOptions) =
     req,
     res,
     prisma,
+    prismaRead,
     user,
   };
 };

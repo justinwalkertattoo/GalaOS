@@ -82,7 +82,7 @@ docker compose -f docker/docker-compose.hub.full.yml up -d
 pnpm install
 
 # Setup database
-cp .env.example .env
+cp .env.template .env
 # Edit .env with your values
 
 # Run migrations
@@ -99,7 +99,7 @@ pnpm dev
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.template` to `.env` and configure:
 
 #### Required:
 ```bash
@@ -257,6 +257,17 @@ docker run --rm -v galaos_postgres_data:/data -v $(pwd):/backup \
 # Scale workers
 docker compose up -d --scale galaos-worker=3
 ```
+
+6. **Load Balancer**:
+- Place a load balancer (e.g., Nginx, AWS ALB, GCP LB, Traefik) in front of the API and Web services.
+- Configure health checks to `/healthz` for liveness and `/ready` for readiness on the API.
+- Enable sticky sessions only if required; most routes are stateless.
+- Terminate TLS at the LB and forward `X-Forwarded-*` headers.
+
+7. **Database Read Replicas**:
+- Optionally offload read-heavy queries to a read replica.
+- Set `DATABASE_READ_URL` (or `READ_REPLICA_URL`) in the environment to point to a replica.
+- The API context now exposes `prismaRead` for read paths; migrate hot GET queries gradually.
 
 ## 🔄 Updates
 

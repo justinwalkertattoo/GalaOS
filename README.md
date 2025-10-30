@@ -89,7 +89,7 @@ git clone https://github.com/justinwalkertattoo/GalaOS.git
 cd GalaOS
 
 # Copy environment variables
-cp .env.example .env
+cp .env.template .env
 
 # Edit .env and add your API keys
 # ANTHROPIC_API_KEY=your-key-here

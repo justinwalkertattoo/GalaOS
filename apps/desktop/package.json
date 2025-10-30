@@ -10,9 +10,11 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder --win nsis"
   },
-  "dependencies": {},
+  "dependencies": {
+    "systeminformation": "^5.23.11"
+  },
   "devDependencies": {
-    "electron": "^30.0.0",
+    "electron": "^35.7.5",
     "electron-builder": "^24.13.3"
   },
   "build": {

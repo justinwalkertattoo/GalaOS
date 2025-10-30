@@ -10,7 +10,7 @@ This document details all the new features, integrations, and capabilities added
 **Browser Extension**: Full AI agent with workflows
 **Multi-Agent System**: CrewAI orchestration
 **Visual Workflows**: Langflow integration
-**Deployment Options**: 4 platforms (Railway, Vercel, Docker Swarm, Kubernetes)
+**Deployment Options**: 3 platforms (Vercel, Docker Swarm, Kubernetes)
 
 ---
 
@@ -556,39 +556,9 @@ Create custom components for GalaOS integrations:
 
 ## 🚀 Deployment Options
 
-GalaOS now supports **4 deployment platforms** with configurations ready to use.
+GalaOS now supports **3 deployment platforms** with configurations ready to use.
 
-### 1. Railway (PaaS) ⭐ Easiest
-
-**Perfect for**: Quick deployment, automatic scaling, managed databases
-
-**Features:**
-- ✅ One-click deployment
-- ✅ Automatic SSL
-- ✅ Built-in PostgreSQL, Redis, Qdrant
-- ✅ Auto-scaling
-- ✅ $5/month starter plan
-
-**Deploy:**
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login and deploy
-railway login
-railway up
-
-# That's it! 🎉
-```
-
-**Configuration**: `railway.json`
-- 5 services: API, Web, Postgres, Redis, Qdrant
-- Private networking
-- Health checks
-- Auto-restart
-- 35GB storage
-
-### 2. Vercel (Serverless) ⚡ Fastest
+### 1. Vercel (Serverless) ⚡ Fastest
 
 **Perfect for**: Frontend, API routes, edge functions
 
@@ -615,7 +585,7 @@ vercel --prod
 - Multi-region
 - CORS support
 
-### 3. Docker Swarm (Self-Hosted) 🐳 Most Control
+### 2. Docker Swarm (Self-Hosted) 🐳 Most Control
 
 **Perfect for**: Enterprise, on-premises, full control
 
@@ -930,7 +900,7 @@ cd GalaOS
 pnpm install
 
 # Set up environment
-cp .env.example .env
+cp .env.template .env
 # Edit .env with your credentials
 
 # Start databases
@@ -948,26 +918,19 @@ open http://localhost:3000
 
 ### Production Deployment
 
-#### Option 1: Railway (Recommended)
-```bash
-railway login
-railway up
-railway open
-```
-
-#### Option 2: Vercel
+#### Option 1: Vercel
 ```bash
 vercel login
 vercel --prod
 ```
 
-#### Option 3: Docker Swarm
+#### Option 2: Docker Swarm
 ```bash
 docker swarm init
 docker stack deploy -c docker-compose.swarm.yml galaos
 ```
 
-#### Option 4: Kubernetes
+#### Option 3: Kubernetes
 ```bash
 kubectl apply -f kubernetes/
 kubectl get all -n galaos
@@ -1059,7 +1022,7 @@ GalaOS now includes:
 ✅ **Browser Extension** with full AI agent capabilities
 ✅ **CrewAI** multi-agent orchestration with 4 process types
 ✅ **Langflow** visual workflow integration
-✅ **4 Deployment Options**: Railway, Vercel, Docker Swarm, Kubernetes
+✅ **3 Deployment Options**: Vercel, Docker Swarm, Kubernetes
 ✅ **Enterprise Features**: Clustering, auto-scaling, high availability
 ✅ **Production Ready**: Monitoring, logging, alerts, backups
 ✅ **Comprehensive Security**: OAuth 2.0, encryption, rate limiting

@@ -83,7 +83,7 @@ cd GalaOS
 npm install
 
 # Copy environment variables
-cp .env.example .env
+cp .env.template .env
 
 # Start development environment
 npm run dev

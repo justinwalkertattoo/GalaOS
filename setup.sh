@@ -35,8 +35,8 @@ echo ""
 
 # Check if .env file exists
 if [ ! -f .env ]; then
-    echo -e "${YELLOW}⚠ .env file not found. Creating from .env.example...${NC}"
-    cp .env.example .env
+    echo -e "${YELLOW}⚠ .env file not found. Creating from .env.template...${NC}"
+    cp .env.template .env
 
     # Generate secure secrets
     echo -e "${GREEN}✓ Generating secure secrets...${NC}"
