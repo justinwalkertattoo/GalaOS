@@ -1,5 +1,7 @@
 import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
+import { rateLimit } from "../services/rate-limit";
+import { alertError } from "../services/alerts";
 
 export const usageRouter = router({
   setLimits: protectedProcedure
@@ -41,6 +43,24 @@ export const usageRouter = router({
       const created = await ctx.prisma.usageEvent.create({
         data: { userId: ctx.user.id, ...input },
       });
+      // Budget alerting: if limits set and threshold exceeded, send Slack alert
+      try {
+        const limits = await ctx.prisma.usageLimits.findUnique({ where: { userId: ctx.user.id } });
+        if (limits && limits.alertEmail) {
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthEvents = await ctx.prisma.usageEvent.findMany({ where: { userId: ctx.user.id, createdAt: { gte: startOfMonth } } });
+          const monthUsd = monthEvents.reduce((s, e) => s + Number(e.costUsd), 0);
+          const cap = Number(limits.monthlyUsdCap || 0);
+          const thresholdPct = limits.alertThreshold || 80;
+          if (cap > 0) {
+            const pct = (monthUsd / cap) * 100;
+            if (pct >= thresholdPct) {
+              await alertError(`Monthly spend reached ${pct.toFixed(1)}% of cap`, { userId: ctx.user.id, monthUsd, cap });
+            }
+          }
+        }
+      } catch {}
       return created;
     }),
 
@@ -107,5 +127,90 @@ export const usageRouter = router({
         if (buckets[key] !== undefined) buckets[key] += Number(e.costUsd);
       }
       return Object.entries(buckets).map(([date, totalUsd]) => ({ date, totalUsd }));
+    }),
+
+  explain: protectedProcedure
+    .input(z.object({ focus: z.string().optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      // Rate limit: 10/min per user/IP
+      const key = `usage:explain:${ctx.user?.id || ctx.req.ip}`;
+      const rl = await rateLimit(key, 10);
+      if (!rl.allowed) {
+        throw new Error(`Please wait ${Math.ceil((rl.retryAfterMs||0)/1000)}s before requesting another explanation.`);
+      }
+      // Gather 30-day data
+      const now = new Date();
+      const from = new Date(now.getTime() - 30 * 86400000);
+      const events = await ctx.prisma.usageEvent.findMany({ where: { userId: ctx.user.id, createdAt: { gte: from } } });
+      const byProv: Record<string, { totalUsd: number; tokensIn: number; tokensOut: number; models: Record<string, { usd: number; inTok: number; outTok: number }> }> = {};
+      for (const e of events) {
+        const prov = e.provider.toLowerCase();
+        const model = e.model || 'unknown';
+        byProv[prov] = byProv[prov] || { totalUsd: 0, tokensIn: 0, tokensOut: 0, models: {} };
+        byProv[prov].totalUsd += Number(e.costUsd);
+        byProv[prov].tokensIn += e.tokensIn;
+        byProv[prov].tokensOut += e.tokensOut;
+        const m = byProv[prov].models[model] || { usd: 0, inTok: 0, outTok: 0 };
+        m.usd += Number(e.costUsd); m.inTok += e.tokensIn; m.outTok += e.tokensOut;
+        byProv[prov].models[model] = m;
+      }
+
+      const monthly = await ctx.prisma.usageEvent.findMany({ where: { userId: ctx.user.id, createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } } });
+      const monthUsd = monthly.reduce((s, e) => s + Number(e.costUsd), 0);
+
+      const contextObj = {
+        period: { from: from.toISOString(), to: now.toISOString() },
+        totalUsd30d: Object.values(byProv).reduce((s, v)=> s+v.totalUsd, 0),
+        totalUsdMonth: monthUsd,
+        providers: byProv,
+        focus: input?.focus || ''
+      };
+
+      const prompt = `You are Gala, an AI architect and cost optimizer.
+Given the following usage metrics JSON, explain spending and suggest concrete ways to consolidate and reduce token and cost usage without reducing quality.
+Prioritize: batching requests, response truncation, selective model choice, caching, streaming, real max_tokens, temperature adjustments, tool/function use, and reuse of context.
+Return:
+- A short overview (2-3 sentences)
+- Key drivers (bulleted)
+- Top 8 optimization actions (bulleted, actionable, with estimated impact)
+JSON (do not echo back fully; summarize):\n${JSON.stringify(contextObj).slice(0, 8000)}\n`;
+
+      // Choose provider
+      const hasAnthropic = Boolean(process.env.ANTHROPIC_API_KEY);
+      const hasOpenAI = Boolean(process.env.OPENAI_API_KEY);
+      try {
+        if (hasAnthropic) {
+          const { default: Anthropic } = await import('@anthropic-ai/sdk');
+          const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+          const res = await client.messages.create({ model: 'claude-3-5-sonnet-20241022', max_tokens: 800, messages: [{ role: 'user', content: prompt }] });
+          const text = res.content[0]?.type === 'text' ? res.content[0].text : 'No content';
+          return { text, provider: 'anthropic' };
+        }
+        if (hasOpenAI) {
+          const { default: OpenAI } = await import('openai');
+          const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+          const res = await client.chat.completions.create({ model: 'gpt-4-turbo-preview', max_tokens: 800, messages: [{ role: 'user', content: prompt }] });
+          const text = res.choices[0]?.message?.content || 'No content';
+          return { text, provider: 'openai' };
+        }
+      } catch (e: any) {
+        // Fall back to heuristic output below
+      }
+
+      // Heuristic fallback if no keys or error
+      const topProv = Object.entries(byProv).sort((a,b)=> b[1].totalUsd - a[1].totalUsd)[0]?.[0] || 'n/a';
+      const suggestions = [
+        'Reduce max_tokens where possible and truncate long outputs.',
+        'Prefer smaller/cheaper models for classification or routing steps; reserve premium models for final generation.',
+        'Batch related requests and cache identical prompts/responses.',
+        'Use tool/function calls to retrieve structured data instead of long generations.',
+        'Stream responses and stop early when sufficient.',
+        'Consolidate system prompts and reuse context between turns to reduce input tokens.',
+        `Audit highest-cost provider: ${topProv}; downshift models where quality is unaffected.`,
+        'Add guardrails to avoid retries/looping on tool errors.'
+      ];
+      const text = `Overview: Total 30d spend $${contextObj.totalUsd30d.toFixed(4)}. Month-to-date $${contextObj.totalUsdMonth.toFixed(4)}.
+Top optimization actions:\n- ${suggestions.join('\n- ')}`;
+      return { text, provider: 'heuristic' };
     }),
 });

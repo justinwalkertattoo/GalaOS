@@ -9,6 +9,7 @@ export default function UsageAdminPage() {
   const series = trpc.usage.series.useQuery({ days: 14 });
   const limits = trpc.usage.getLimits.useQuery();
   const setLimits = trpc.usage.setLimits.useMutation({ onSuccess: () => limits.refetch() });
+  const explain = trpc.usage.explain.useMutation();
 
   const [form, setForm] = React.useState({
     dailyUsdCap: 0,
@@ -19,6 +20,8 @@ export default function UsageAdminPage() {
     alertEmail: "",
     alertThreshold: 80,
   });
+  const [focus, setFocus] = React.useState("");
+  const [analysis, setAnalysis] = React.useState<string>("");
 
   React.useEffect(() => {
     if (limits.data) {
@@ -73,7 +76,19 @@ export default function UsageAdminPage() {
       <section className="border rounded p-4 space-y-3">
         <h2 className="font-medium">Spend Trend (14 days)</h2>
         {series.data ? (
-          <Sparkline data={series.data.map(p=>p.totalUsd)} labels={series.data.map(p=>p.date)} />
+          <Sparkline
+            points={series.data}
+            renderPoint={(pt) => (
+              <ExplainHover
+                label={`$${pt.totalUsd.toFixed(4)} on ${pt.date}`}
+                cacheKey={`trend:${pt.date}:${pt.totalUsd.toFixed(4)}`}
+                getText={async () => {
+                  const res = await explain.mutateAsync({ focus: `Focus: reduce spend on ${pt.date} which totaled $${pt.totalUsd.toFixed(4)}.` });
+                  return res.text;
+                }}
+              />
+            )}
+          />
         ) : <p>Loading…</p>}
       </section>
 
@@ -83,10 +98,30 @@ export default function UsageAdminPage() {
           <div className="text-sm space-y-2">
             {Object.entries(breakdown.data).map(([prov, info]) => (
               <div key={prov} className="border rounded p-2">
-                <div className="font-medium">{prov} — ${info.totalUsd.toFixed(4)}</div>
+                <div className="font-medium flex items-center gap-2">
+                  {prov} — ${info.totalUsd.toFixed(4)}
+                  <ExplainHover
+                    label="What drives this?"
+                    cacheKey={`prov:${prov}:${(info as any).totalUsd}`}
+                    getText={async () => {
+                      const res = await explain.mutateAsync({ focus: `Focus provider ${prov} with spend $${info.totalUsd.toFixed(4)}. Suggest reductions.` });
+                      return res.text;
+                    }}
+                  />
+                </div>
                 <ul className="pl-5 list-disc">
                   {Object.entries(info.models).map(([model, usd]) => (
-                    <li key={model}>{model}: ${usd.toFixed(4)}</li>
+                    <li key={model} className="flex items-center gap-2">
+                      <span>{model}: ${usd.toFixed(4)}</span>
+                      <ExplainHover
+                        label="Explain"
+                        cacheKey={`model:${prov}:${model}:${(usd as any).toFixed ? (usd as any).toFixed(4) : usd}`}
+                        getText={async () => {
+                          const res = await explain.mutateAsync({ focus: `Focus provider ${prov} model ${model} spend $${usd.toFixed(4)}. Provide concrete optimization steps.` });
+                          return res.text;
+                        }}
+                      />
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -131,21 +166,122 @@ export default function UsageAdminPage() {
           </button>
         </div>
       </section>
+
+      <section className="border rounded p-4 space-y-3">
+        <h2 className="font-medium">Gala Suggestions</h2>
+        <p className="text-sm text-muted-foreground">Ask Gala to explain current usage and suggest ways to reduce tokens/costs.</p>
+        <textarea
+          value={focus}
+          onChange={(e)=>setFocus(e.target.value)}
+          placeholder="Optional focus (e.g., prioritize Anthropic reductions, keep latency low, etc.)"
+          className="w-full border rounded p-2 min-h-[80px]"
+        />
+        <div className="flex items-center gap-2">
+          <button
+            className="px-3 py-1 rounded bg-black text-white disabled:opacity-50"
+            onClick={async ()=>{
+              setAnalysis("");
+              try {
+                const res = await explain.mutateAsync({ focus });
+                setAnalysis(res.text || "");
+              } catch (e:any) {
+                setAnalysis(e?.message || 'Failed to generate analysis');
+              }
+            }}
+            disabled={explain.isPending}
+          >
+            {explain.isPending ? 'Generating…' : 'Generate Suggestions'}
+          </button>
+        </div>
+        {analysis ? (
+          <pre className="whitespace-pre-wrap text-sm p-3 bg-gray-50 border rounded">{analysis}</pre>
+        ) : null}
+      </section>
     </div>
   );
 }
 
-function Sparkline({ data, labels }: { data: number[]; labels?: string[] }) {
-  const width = 500; const height = 100; const pad = 4;
-  const max = Math.max(1, ...data);
-  const pts = data.map((v,i)=>{
-    const x = pad + (i*(width-2*pad))/(Math.max(1,data.length-1));
-    const y = height - pad - (v/max)*(height-2*pad);
+function Sparkline({ points, renderPoint }: { points: { date: string; totalUsd: number }[]; renderPoint: (pt: { date: string; totalUsd: number }) => React.ReactNode }) {
+  const width = 560; const height = 120; const pad = 8;
+  const max = Math.max(1, ...points.map(p=>p.totalUsd));
+  const poly = points.map((p,i)=>{
+    const x = pad + (i*(width-2*pad))/(Math.max(1,points.length-1));
+    const y = height - pad - (p.totalUsd/max)*(height-2*pad);
     return `${x},${y}`;
   }).join(' ');
   return (
-    <svg width={width} height={height} className="bg-white border rounded">
-      <polyline points={pts} fill="none" stroke="#0ea5e9" strokeWidth="2" />
-    </svg>
+    <div className="relative inline-block">
+      <svg width={width} height={height} className="bg-white border rounded">
+        <polyline points={poly} fill="none" stroke="#0ea5e9" strokeWidth="2" />
+        {points.map((p,i)=>{
+          const x = pad + (i*(width-2*pad))/(Math.max(1,points.length-1));
+          const y = height - pad - (p.totalUsd/max)*(height-2*pad);
+          return (
+            <g key={p.date}>
+              <circle cx={x} cy={y} r={3} fill="#0ea5e9" />
+            </g>
+          );
+        })}
+      </svg>
+      <div className="absolute inset-0 pointer-events-none">
+        {points.map((p,i)=>{
+          const x = pad + (i*(width-2*pad))/(Math.max(1,points.length-1));
+          const y = height - pad - (p.totalUsd/max)*(height-2*pad);
+          return (
+            <div key={p.date} style={{ position: 'absolute', left: x-8, top: y-8 }} className="pointer-events-auto">
+              {renderPoint(p)}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const explainCache = new Map<string, string>();
+function ExplainHover({ label, getText, cacheKey }: { label: string; getText: () => Promise<string>; cacheKey: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [text, setText] = React.useState<string>("");
+  const timer = React.useRef<any>(null);
+  const inFlight = React.useRef<Promise<string> | null>(null);
+
+  const fetchText = React.useCallback(async () => {
+    if (explainCache.has(cacheKey)) {
+      return explainCache.get(cacheKey)!;
+    }
+    if (inFlight.current) return inFlight.current;
+    const p = getText().then((t) => {
+      explainCache.set(cacheKey, t);
+      return t;
+    });
+    inFlight.current = p;
+    const result = await p.finally(() => { inFlight.current = null; });
+    return result;
+  }, [cacheKey, getText]);
+
+  return (
+    <div
+      onMouseEnter={() => {
+        setOpen(true);
+        if ((!text || text.length === 0) && !loading) {
+          setLoading(true);
+          timer.current = setTimeout(async () => {
+            try { const t = await fetchText(); setText(t); } finally { setLoading(false); }
+          }, 300);
+        }
+      }}
+      onMouseLeave={() => { setOpen(false); if (timer.current) clearTimeout(timer.current); }}
+      className="inline-flex items-center gap-1 cursor-help relative"
+    >
+      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-slate-300 text-slate-600 text-[11px] hover:bg-slate-100" aria-label={label}>i</span>
+      {open && (
+        <div className="z-10 absolute mt-2 w-80 p-3 rounded border bg-white shadow-lg animate-in fade-in-0 zoom-in-95" style={{ transformOrigin: 'top left' }}>
+          <div className="text-xs text-slate-700 whitespace-pre-wrap">
+            {loading ? 'Analyzing…' : (text || 'No details')}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
