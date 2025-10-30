@@ -31,7 +31,9 @@
       "Bash(cat:*)",
       "Bash(docker-compose ps:*)",
       "Bash(npx prisma:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []
