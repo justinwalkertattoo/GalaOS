@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(find:*)",
+      "Bash(powershell:*)",
+      "Bash(npm config:*)",
+      "Bash(npm cache verify:*)",
+      "Read(//c/Program Files/Docker/**)",
+      "Bash(docker system:*)",
+      "Read(//c/Users/justi/**)",
+      "Bash(docker info:*)",
+      "Bash(wsl --list:*)",
+      "Bash(wsl --shutdown)",
+      "Bash(taskkill:*)",
+      "Bash(bash:*)",
+      "Bash(timeout 60 du:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(gh repo view:*)",
+      "Bash(git filter-repo:*)",
+      "Bash(gh api:*)",
+      "Read(//e/GalaOS/**)",
+      "Bash(git filter-branch:*)",
+      "Bash(git stash:*)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch:*)",
+      "Bash(git log:*)",
+      "Bash(git push:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
