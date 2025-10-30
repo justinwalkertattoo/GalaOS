@@ -1,0 +1,67 @@
+name: Gala Auto PR
+
+on:
+  push:
+    branches:
+      - 'gala/**'
+  workflow_dispatch:
+    inputs:
+      head:
+        description: Head branch name
+        required: false
+      base:
+        description: Base branch name
+        required: false
+        default: main
+      title:
+        description: PR title
+        required: false
+      body:
+        description: PR body
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Open or update PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const { context, github } = require('@actions/github');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const isPush = context.eventName === 'push';
+            const refName = context.ref?.replace('refs/heads/', '') || '';
+
+            const head = isPush ? refName : (core.getInput('head') || refName);
+            const base = core.getInput('base') || 'main';
+            const title = core.getInput('title') || `Gala: ${head}`;
+            const body = core.getInput('body') || 'Automated PR opened by Gala.';
+
+            if (!head) {
+              core.setFailed('No head branch supplied.');
+              return;
+            }
+
+            // Check if an open PR already exists for this head
+            const existing = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${head}` });
+            if (existing.data.length > 0) {
+              core.info(`PR already exists: #${existing.data[0].number}`);
+              return;
+            }
+
+            // Create PR
+            const pr = await github.rest.pulls.create({ owner, repo, title, head, base, body });
+            core.info(`Opened PR #${pr.data.number}`);
+
