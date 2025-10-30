@@ -36,8 +36,8 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Build web
-        run: npm run build --workspace=@galaos/web
+      - name: Build workspace packages
+        run: npm run build --if-present
       - name: Start web
         run: npm run start --workspace=@galaos/web &
       - name: Install Playwright
