@@ -524,6 +524,75 @@ model AgentConversation {
   @@map("agent_conversations")
 }
 
+// ============================================================================
+// LEARNING OBSERVATIONS
+// ============================================================================
+
+model Observation {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String   // chat, tool, research, file
+  source     String   // anthropic, openai, local, system
+  inputText  String?  @db.Text
+  outputText String?  @db.Text
+  metadata   Json?
+  tags       Json     @default("[]") // Array of strings
+  status     String   @default("pending") // pending, processed, error
+  createdAt  DateTime @default(now())
+  processedAt DateTime?
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("observations")
+  @@index([userId, status, createdAt])
+}
+
+// ============================================================================
+// USAGE + BILLING
+// ============================================================================
+
+model UsageEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  provider   String   // openai, anthropic, ollama, docker
+  model      String?
+  endpoint   String?  // chat.completions, messages.create, etc.
+  tokensIn   Int      @default(0)
+  tokensOut  Int      @default(0)
+  costUsd    Decimal  @default(0.0)
+  status     String   @default("ok") // ok, error, throttled
+  requestId  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("usage_events")
+  @@index([userId, createdAt])
+}
+
+model UsageLimits {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  // Hard budgets
+  dailyUsdCap     Decimal  @default(0.0)
+  monthlyUsdCap   Decimal  @default(0.0)
+  // Request quotas
+  perMinute       Int      @default(60)
+  perHour         Int      @default(2000)
+  perDay          Int      @default(20000)
+  // Alerts
+  alertEmail      String?
+  alertThreshold  Int      @default(80) // % before cap to warn
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("usage_limits")
+}
+
+
 model Sandbox {
   id          String   @id @default(cuid())
   userId      String

@@ -3,6 +3,9 @@ import { chatRequestSchema } from '@galaos/types';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
+import { rateLimit } from '../services/rate-limit';
+import { checkUserLimits } from '../services/limits';
+import { estimateCostUsd } from '../services/cost';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -14,6 +17,15 @@ const openai = new OpenAI({
 
 export const aiRouter = router({
   chat: protectedProcedure.input(chatRequestSchema).mutation(async ({ ctx, input }) => {
+    const key = `ai:chat:${ctx.user?.id || ctx.req.ip}`;
+    const rl = await rateLimit(key, 60);
+    if (!rl.allowed) {
+      throw new Error(`Rate limited. Retry after ${rl.retryAfterMs}ms`);
+    }
+    if (ctx.user?.id) {
+      const lim = await checkUserLimits(ctx.user.id);
+      if (!lim.allowed) throw new Error(`Budget/Quota exceeded: ${lim.reason}`);
+    }
     let conversationId = input.conversationId;
 
     // Create or get conversation
@@ -53,6 +65,29 @@ export const aiRouter = router({
       });
 
       assistantMessage = response.content[0].type === 'text' ? response.content[0].text : '';
+      const usage: any = (response as any).usage || {};
+      const inTok = Number(usage.input_tokens || 0);
+      const outTok = Number(usage.output_tokens || 0);
+      const cost = estimateCostUsd('anthropic', input.model || 'claude-3-5-sonnet-20241022', inTok, outTok);
+      await ctx.prisma.usageEvent.create({ data: {
+        userId: ctx.user.id,
+        provider: 'anthropic',
+        model: input.model || 'claude-3-5-sonnet-20241022',
+        endpoint: 'messages.create',
+        tokensIn: inTok,
+        tokensOut: outTok,
+        costUsd: cost,
+        status: 'ok',
+      }});
+      await ctx.prisma.observation.create({ data: {
+        userId: ctx.user.id,
+        type: 'chat',
+        source: 'anthropic',
+        inputText: input.messages.map(m=>`[${m.role}] ${m.content}`).join('\n'),
+        outputText: assistantMessage,
+        metadata: { model: input.model || 'claude-3-5-sonnet-20241022' },
+        status: 'pending'
+      }});
     } else {
       const response = await openai.chat.completions.create({
         model: input.model || 'gpt-4-turbo-preview',
@@ -65,6 +100,29 @@ export const aiRouter = router({
       });
 
       assistantMessage = response.choices[0]?.message?.content || '';
+      const usage = response.usage as any;
+      const inTok = Number(usage?.prompt_tokens || 0);
+      const outTok = Number(usage?.completion_tokens || 0);
+      const cost = estimateCostUsd('openai', input.model || 'gpt-4-turbo-preview', inTok, outTok);
+      await ctx.prisma.usageEvent.create({ data: {
+        userId: ctx.user.id,
+        provider: 'openai',
+        model: input.model || 'gpt-4-turbo-preview',
+        endpoint: 'chat.completions',
+        tokensIn: inTok,
+        tokensOut: outTok,
+        costUsd: cost,
+        status: 'ok',
+      }});
+      await ctx.prisma.observation.create({ data: {
+        userId: ctx.user.id,
+        type: 'chat',
+        source: 'openai',
+        inputText: input.messages.map(m=>`[${m.role}] ${m.content}`).join('\n'),
+        outputText: assistantMessage,
+        metadata: { model: input.model || 'gpt-4-turbo-preview' },
+        status: 'pending'
+      }});
     }
 
     // Save assistant message

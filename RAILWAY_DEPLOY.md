@@ -1,8 +1,10 @@
-# 🚂 Railway Deployment Guide
+# 🚂 [Deprecated] Railway Deployment Guide
 
 ## Prerequisites
 
-Before deploying to Railway, you need:
+Note: Railway deployment is retired in this repository. CI automation for Railway has been removed. This guide is preserved for historical reference only.
+
+Before deploying to Railway (not maintained), you would need:
 
 1. **Railway Account** - Sign up at [railway.app](https://railway.app)
 2. **Railway CLI** (optional) - `npm i -g @railway/cli`

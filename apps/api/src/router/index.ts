@@ -21,6 +21,8 @@ import { crewAIRouter } from './crewai';
 import { mcpRouter } from './mcp';
 import { generatorsRouter } from './generators';
 import { systemRouter } from './system';
+import { usageRouter } from './usage';
+import { learningRouter } from './learning';
 
 export const appRouter = router({
   auth: authRouter,
@@ -45,6 +47,8 @@ export const appRouter = router({
   mcp: mcpRouter,
   generators: generatorsRouter,
   system: systemRouter,
+  usage: usageRouter,
+  learning: learningRouter,
 });
 
 export type AppRouter = typeof appRouter;

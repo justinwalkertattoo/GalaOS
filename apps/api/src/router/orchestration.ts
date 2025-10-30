@@ -10,6 +10,8 @@ import {
   emailMarketerConfig,
 } from '@galaos/ai/src/agents';
 import { encryptionService } from '../services/encryption';
+import { rateLimit } from '../services/rate-limit';
+import { checkUserLimits } from '../services/limits';
 
 // Workflow engine instance
 const workflowEngine = new WorkflowEngine();
@@ -101,6 +103,11 @@ export const orchestrationRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const key = `analyze:${ctx.user?.id || ctx.req.ip}`;
+      const rl = await rateLimit(key, 60); // 60/min per user/IP
+      if (!rl.allowed) {
+        throw new Error(`Rate limited. Retry after ${rl.retryAfterMs}ms`);
+      }
       const orchestrator = await createUserOrchestrator(ctx);
       const intent = await orchestrator.analyzeIntent(input.message, input.context);
       return intent;
@@ -115,6 +122,11 @@ export const orchestrationRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const key = `plan:${ctx.user?.id || ctx.req.ip}`;
+      const rl = await rateLimit(key, 30);
+      if (!rl.allowed) {
+        throw new Error(`Rate limited. Retry after ${rl.retryAfterMs}ms`);
+      }
       const orchestrator = await createUserOrchestrator(ctx);
       const plan = await orchestrator.createOrchestrationPlan(input.message, input.context);
       return plan;
@@ -223,6 +235,17 @@ export const orchestrationRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const key = `gala:${ctx.user?.id || ctx.req.ip}`;
+      const rl = await rateLimit(key, 30);
+      if (!rl.allowed) {
+        throw new Error(`Rate limited. Retry after ${rl.retryAfterMs}ms`);
+      }
+      if (ctx.user?.id) {
+        const lim = await checkUserLimits(ctx.user.id);
+        if (!lim.allowed) {
+          throw new Error(`Budget/Quota exceeded: ${lim.reason}`);
+        }
+      }
       const orchestrator = await createUserOrchestrator(ctx);
       const response = await orchestrator.gala(input.message, input.context);
       // Hallucination guard verification wrapper
