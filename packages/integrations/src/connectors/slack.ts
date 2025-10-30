@@ -104,7 +104,10 @@ export class SlackIntegration extends BaseIntegration {
 
     const formData = new FormData();
     formData.append('channels', data.channels.join(','));
-    formData.append('file', new Blob([data.file]));
+    const fileBlob = typeof data.file === 'string'
+      ? new Blob([data.file])
+      : new Blob([new Uint8Array(data.file)]);
+    formData.append('file', fileBlob);
     formData.append('filename', data.filename);
     if (data.title) formData.append('title', data.title);
     if (data.initialComment) formData.append('initial_comment', data.initialComment);
