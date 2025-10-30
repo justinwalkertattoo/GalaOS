@@ -20,7 +20,7 @@ export interface PolicyDecision {
   superuser?: boolean;
 }
 
-function isSuperUser(ctx: Context): boolean {
+export function isSuperUser(ctx: Context): boolean {
   const devEmail = process.env.DEV_SUPERUSER_EMAIL?.toLowerCase();
   const devId = process.env.DEV_SUPERUSER_ID;
   if (!ctx.user) return false;
