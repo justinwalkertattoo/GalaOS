@@ -5,6 +5,8 @@ import { trpc } from "@/lib/trpc";
 export default function UsageAdminPage() {
   const daily = trpc.usage.summary.useQuery({ range: "day" });
   const monthly = trpc.usage.summary.useQuery({ range: "month" });
+  const breakdown = trpc.usage.breakdown.useQuery({ range: "month" });
+  const series = trpc.usage.series.useQuery({ days: 14 });
   const limits = trpc.usage.getLimits.useQuery();
   const setLimits = trpc.usage.setLimits.useMutation({ onSuccess: () => limits.refetch() });
 
@@ -60,11 +62,37 @@ export default function UsageAdminPage() {
               <li>Events: {monthly.data.count}</li>
               <li>Tokens In: {monthly.data.tokensIn}</li>
               <li>Tokens Out: {monthly.data.tokensOut}</li>
+              <li>Forecast USD: ${monthly.data.forecast?.toFixed(2)}</li>
             </ul>
           ) : (
             <p>Loading…</p>
           )}
         </div>
+      </section>
+
+      <section className="border rounded p-4 space-y-3">
+        <h2 className="font-medium">Spend Trend (14 days)</h2>
+        {series.data ? (
+          <Sparkline data={series.data.map(p=>p.totalUsd)} labels={series.data.map(p=>p.date)} />
+        ) : <p>Loading…</p>}
+      </section>
+
+      <section className="border rounded p-4 space-y-3">
+        <h2 className="font-medium">Provider / Model Breakdown (Month)</h2>
+        {breakdown.data ? (
+          <div className="text-sm space-y-2">
+            {Object.entries(breakdown.data).map(([prov, info]) => (
+              <div key={prov} className="border rounded p-2">
+                <div className="font-medium">{prov} — ${info.totalUsd.toFixed(4)}</div>
+                <ul className="pl-5 list-disc">
+                  {Object.entries(info.models).map(([model, usd]) => (
+                    <li key={model}>{model}: ${usd.toFixed(4)}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : <p>Loading…</p>}
       </section>
 
       <section className="border rounded p-4 space-y-3">
@@ -107,3 +135,17 @@ export default function UsageAdminPage() {
   );
 }
 
+function Sparkline({ data, labels }: { data: number[]; labels?: string[] }) {
+  const width = 500; const height = 100; const pad = 4;
+  const max = Math.max(1, ...data);
+  const pts = data.map((v,i)=>{
+    const x = pad + (i*(width-2*pad))/(Math.max(1,data.length-1));
+    const y = height - pad - (v/max)*(height-2*pad);
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <svg width={width} height={height} className="bg-white border rounded">
+      <polyline points={pts} fill="none" stroke="#0ea5e9" strokeWidth="2" />
+    </svg>
+  );
+}
