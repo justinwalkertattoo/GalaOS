@@ -23,6 +23,7 @@ import { generatorsRouter } from './generators';
 import { systemRouter } from './system';
 import { usageRouter } from './usage';
 import { learningRouter } from './learning';
+import { agentExecRouter } from './agent-exec';
 
 export const appRouter = router({
   auth: authRouter,
@@ -49,6 +50,7 @@ export const appRouter = router({
   system: systemRouter,
   usage: usageRouter,
   learning: learningRouter,
+  agentExec: agentExecRouter,
 });
 
 export type AppRouter = typeof appRouter;

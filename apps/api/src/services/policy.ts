@@ -7,7 +7,12 @@ export type ActionKind =
   | "system.diagnostics"
   | "updates.run"
   | "files.write"
-  | "packages.install";
+  | "packages.install"
+  | "shell.exec"
+  | "files.read"
+  | "files.move"
+  | "files.delete"
+  | "net.fetch";
 
 export interface PolicyDecision {
   allow: boolean;
@@ -37,15 +42,19 @@ export function decide(ctx: Context, action: ActionKind, resource?: string): Pol
   switch (action) {
     case "system.diagnostics":
     case "system.selfAudit":
+    case "files.read":
       return { allow: true };
     case "generators.run":
     case "generators.create":
     case "files.write":
+    case "files.move":
+    case "files.delete":
     case "packages.install":
     case "updates.run":
+    case "shell.exec":
+    case "net.fetch":
       return { allow: false, reason: "Not permitted without superuser override" };
     default:
       return { allow: false, reason: "Unknown action" };
   }
 }
-
