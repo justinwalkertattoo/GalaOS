@@ -21,7 +21,9 @@
     "db:migrate": "cd packages/db && npx prisma migrate dev",
     "db:studio": "cd packages/db && npx prisma studio",
     "desktop:dev": "npm run -w @galaos/desktop dev",
-    "desktop:dist": "npm run -w @galaos/desktop dist"
+    "desktop:dist": "npm run -w @galaos/desktop dist",
+    "audit:ci": "npm audit --omit=dev --audit-level=high",
+    "outdated:ci": "npm outdated || true"
   },
   "devDependencies": {
     "@turbo/gen": "^1.11.2",
