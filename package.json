@@ -23,14 +23,16 @@
     "desktop:dev": "npm run -w @galaos/desktop dev",
     "desktop:dist": "npm run -w @galaos/desktop dist",
     "audit:ci": "npm audit --omit=dev --audit-level=high",
-    "outdated:ci": "npm outdated || true"
+    "outdated:ci": "npm outdated || true",
+    "e2e": "playwright test -c apps/web/playwright.config.ts"
   },
   "devDependencies": {
     "@turbo/gen": "^1.11.2",
     "turbo": "^1.11.2",
     "prettier": "^3.1.1",
     "typescript": "^5.3.3",
-    "@types/node": "^20.10.6"
+    "@types/node": "^20.10.6",
+    "@playwright/test": "^1.47.2"
   },
   "engines": {
     "node": ">=20.0.0",
