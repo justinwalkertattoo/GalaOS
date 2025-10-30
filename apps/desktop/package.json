@@ -6,11 +6,36 @@
   "description": "GalaOS Desktop wrapper (Electron)",
   "scripts": {
     "dev": "electron .",
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis"
   },
   "dependencies": {},
   "devDependencies": {
-    "electron": "^30.0.0"
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.galaos.desktop",
+    "productName": "GalaOS Desktop",
+    "files": [
+      "**/*"
+    ],
+    "directories": {
+      "buildResources": "resources"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
-

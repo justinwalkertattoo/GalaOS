@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src http://127.0.0.1:* http://localhost:*" />
+    <title>GalaOS Desktop</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+      h1 { font-size: 18px; margin: 0 0 12px; }
+      .row { display:flex; gap:8px; align-items:center; margin: 8px 0; }
+      .card { border:1px solid #ddd; border-radius: 8px; padding: 12px; margin: 8px 0; }
+      code { background:#f6f8fa; padding:2px 4px; border-radius:4px; }
+      .ok { color: #0a7f2e; }
+      .err { color: #b00020; }
+      button { padding:6px 10px; border-radius:6px; border:1px solid #222; background:#111; color:#fff; }
+      button.secondary { background:#fff; color:#111; border:1px solid #999; }
+    </style>
+  </head>
+  <body>
+    <h1>GalaOS Desktop</h1>
+    <div class="card">
+      <div class="row">
+        <button id="start">Start Services</button>
+        <button id="stop" class="secondary">Stop Services</button>
+        <button id="openWeb">Open Web UI</button>
+        <button id="docker" class="secondary">Get Docker Desktop</button>
+      </div>
+      <div class="row" id="msg"></div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <button id="health">Check Health</button>
+        <span>API: <code id="apiUrl">http://127.0.0.1:3001</code></span>
+      </div>
+      <div class="row">Healthz: <span id="hz">unknown</span></div>
+      <div class="row">Ready: <span id="ready">unknown</span></div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const apiBase = 'http://127.0.0.1:3001';
+      function setMsg(text, ok){ const el=$('msg'); el.textContent=text; el.className= ok? 'ok':'err'; }
+      $('start').onclick = async () => { setMsg('Starting…'); const res = await window.electron.startServices(); setMsg(res.ok? 'Started' : 'Failed (code '+res.code+')', res.ok); };
+      $('stop').onclick = async () => { setMsg('Stopping…'); const res = await window.electron.stopServices(); setMsg(res.ok? 'Stopped' : 'Failed (code '+res.code+')', res.ok); };
+      $('openWeb').onclick = async () => { await window.electron.openWeb(); };
+      $('docker').onclick = async () => { await window.electron.openDocker(); };
+      $('health').onclick = async () => {
+        try {
+          const hz = await fetch(apiBase + '/healthz'); $('hz').textContent = hz.ok ? 'ok' : 'error:'+hz.status; $('hz').className = hz.ok? 'ok':'err';
+        } catch { $('hz').textContent = 'error'; $('hz').className = 'err'; }
+        try {
+          const rd = await fetch(apiBase + '/ready'); $('ready').textContent = rd.ok ? 'ok' : 'error:'+rd.status; $('ready').className = rd.ok? 'ok':'err';
+        } catch { $('ready').textContent = 'error'; $('ready').className = 'err'; }
+      };
+    </script>
+  </body>
+  </html>
+

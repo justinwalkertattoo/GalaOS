@@ -28,7 +28,9 @@
       "Bash(git push:*)",
       "Bash(git config:*)",
       "Bash(git commit:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(npx prisma:*)"
     ],
     "deny": [],
     "ask": []

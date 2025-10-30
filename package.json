@@ -19,7 +19,9 @@
     "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker-compose -f docker/docker-compose.yml down",
     "db:migrate": "cd packages/db && npx prisma migrate dev",
-    "db:studio": "cd packages/db && npx prisma studio"
+    "db:studio": "cd packages/db && npx prisma studio",
+    "desktop:dev": "npm run -w @galaos/desktop dev",
+    "desktop:dist": "npm run -w @galaos/desktop dist"
   },
   "devDependencies": {
     "@turbo/gen": "^1.11.2",

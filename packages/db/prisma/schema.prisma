@@ -40,6 +40,9 @@ model User {
   modelProviders ModelProvider[]
   agentConversations AgentConversation[]
   sandboxes     Sandbox[]
+  observations  Observation[]
+  usageEvents   UsageEvent[]
+  usageLimits   UsageLimits?
 
   @@map("users")
 }
