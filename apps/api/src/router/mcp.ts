@@ -451,7 +451,7 @@ export const mcpRouter = router({
         providerId: z.string().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       // TODO: Implement actual Ollama pull via provider
       // This would be a long-running operation, should use a job queue
 

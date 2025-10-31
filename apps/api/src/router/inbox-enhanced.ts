@@ -1,13 +1,10 @@
 import { router, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import axios from 'axios';
 import FormData from 'form-data';
 
 // Environment variables
 const MINIO_URL = process.env.MINIO_URL || 'http://localhost:9000';
-const MINIO_ACCESS_KEY = process.env.MINIO_ROOT_USER || 'galaos';
-const MINIO_SECRET_KEY = process.env.MINIO_ROOT_PASSWORD || 'minio_secure_password_change_me';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Import BullMQ for job queues

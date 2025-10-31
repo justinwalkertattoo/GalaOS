@@ -41,7 +41,7 @@ const EXEC_COMMANDS: Record<string, (filename: string) => string[]> = {
   python: (f) => ['python', f],
   bash: (f) => ['sh', f],
   go: (f) => ['go', 'run', f],
-  rust: (f) => ['cargo', 'run'],
+  rust: (_f) => ['cargo', 'run'],
 };
 
 export const sandboxRouter = router({

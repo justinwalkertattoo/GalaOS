@@ -177,8 +177,7 @@ function getOAuthManager() {
 
 export const integrationRouter = router({
   create: protectedProcedure.input(createIntegrationSchema).mutation(async ({ ctx, input }) => {
-    // Use OAuth manager for connection
-    const manager = getOAuthManager();
+    // OAuth manager is available via getOAuthManager() if needed
 
     // This should be called after OAuth flow completes
     const integration = await ctx.prisma.integration.create({

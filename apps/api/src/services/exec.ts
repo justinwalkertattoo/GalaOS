@@ -1,5 +1,4 @@
 import { spawn } from 'child_process';
-import os from 'os';
 
 export interface ExecOptions {
   cwd?: string;
@@ -11,7 +10,6 @@ export interface ExecOptions {
 
 export function runCommand(cmd: string, args: string[] = [], opts: ExecOptions = {}): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
-    const shell = opts.shell || (os.platform() === 'win32' ? process.env.ComSpec || 'cmd.exe' : '/bin/bash');
     const timeout = opts.timeoutMs ?? Number(process.env.SHELL_TIMEOUT_MS || 60000);
     const maxKb = opts.maxOutputKb ?? Number(process.env.EXEC_MAX_OUTPUT_KB || 5120);
     const child = spawn(cmd, args, { cwd: opts.cwd || process.cwd(), env: { ...process.env, ...opts.env }, shell: false });

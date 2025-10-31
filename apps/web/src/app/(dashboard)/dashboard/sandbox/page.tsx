@@ -250,7 +250,7 @@ function SandboxEditor({ sandbox, onUpdate }: { sandbox: any; onUpdate: () => vo
         setJsCode(webTemplates.js);
       }
     }
-  }, [sandbox.language]);
+  }, [sandbox.language, code, htmlCode, isWebLanguage]);
 
   return (
     <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">

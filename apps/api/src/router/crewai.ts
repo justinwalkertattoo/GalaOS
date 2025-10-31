@@ -66,7 +66,7 @@ export const crewAIRouter: any = router({
    */
   createCrew: protectedProcedure
     .input(crewConfigSchema)
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       try {
         const builder = new CrewBuilder()
           .crew(input.id, input.name, input.description)

@@ -33,7 +33,7 @@ export function isSuperUser(ctx: Context): boolean {
   return false;
 }
 
-export function decide(ctx: Context, action: ActionKind, resource?: string): PolicyDecision {
+export function decide(ctx: Context, action: ActionKind, _resource?: string): PolicyDecision {
   const superuser = isSuperUser(ctx);
   // Superuser can do anything, with audit logging elsewhere
   if (superuser) return { allow: true, superuser };

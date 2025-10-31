@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { trpc } from '@/lib/trpc';
 import { Send, Paperclip, X, Loader2 } from 'lucide-react';
 
@@ -159,10 +160,11 @@ export default function GalaPage() {
                         className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-white/50"
                       >
                         {file.type.startsWith('image/') ? (
-                          <img
+                          <Image
                             src={file.url}
                             alt={file.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
@@ -202,7 +204,7 @@ export default function GalaPage() {
                   className="relative group w-24 h-24 rounded-lg overflow-hidden border-2 border-purple-500"
                 >
                   {file.type.startsWith('image/') ? (
-                    <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                    <Image src={file.url} alt={file.name} fill className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
                       <Paperclip className="w-6 h-6" />

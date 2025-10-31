@@ -2,7 +2,7 @@ import { router, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { CodeGenerator } from '@galaos/core/src/code-generator';
-import { FileWatcher, HotReloadManager } from '@galaos/core/src/file-watcher';
+import { HotReloadManager } from '@galaos/core/src/file-watcher';
 
 // Singleton instances
 let codeGenerator: CodeGenerator;

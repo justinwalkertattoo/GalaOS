@@ -27,7 +27,7 @@ export default function IntegrationsPage() {
   });
 
   const providers = providerData?.providers || [];
-  const connections = connectionsData?.connections || [];
+  const connections = useMemo(() => connectionsData?.connections || [], [connectionsData?.connections]);
 
   const connectedByProvider = useMemo(() => {
     const map = new Map<string, boolean>();
