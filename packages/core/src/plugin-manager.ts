@@ -351,7 +351,7 @@ export class PluginManager {
       },
     });
 
-    return modules.flatMap(m => m.routes);
+    return modules.flatMap((m: any) => m.routes);
   }
 
   /**
@@ -370,7 +370,7 @@ export class PluginManager {
       },
     });
 
-    return modules.flatMap(m => m.workflows);
+    return modules.flatMap((m: any) => m.workflows);
   }
 
   /**

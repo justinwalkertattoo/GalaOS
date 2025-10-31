@@ -48,7 +48,6 @@ export class BrowserIntegration {
     }
     try {
       const mod = await import('puppeteer');
-      // @ts-expect-error default property exists at runtime
       return (mod as any).default || mod;
     } catch (e) {
       throw new Error('Puppeteer is not available in this environment. Ensure dependencies and runtime libs are installed.');
