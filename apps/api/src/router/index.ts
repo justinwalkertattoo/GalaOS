@@ -25,6 +25,7 @@ import { usageRouter } from './usage';
 import { learningRouter } from './learning';
 import { agentExecRouter } from './agent-exec';
 import { helpRouter } from './help';
+import { modulesRouter } from './modules';
 
 export const appRouter = router({
   auth: authRouter,
@@ -53,6 +54,7 @@ export const appRouter = router({
   learning: learningRouter,
   agentExec: agentExecRouter,
   help: helpRouter,
+  modules: modulesRouter,
 });
 
 export type AppRouter = typeof appRouter;

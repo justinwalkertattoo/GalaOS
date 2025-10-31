@@ -12,9 +12,16 @@ import { initOtel } from './services/otel';
 import { alertError } from './services/alerts';
 import IORedis from 'ioredis';
 import { prisma } from '@galaos/db';
+import { getPluginManager } from '@galaos/core';
+import { TattooGuildModule } from '@galaos/tattoo-guild';
 
 // Load environment variables
 config();
+
+// Initialize plugin manager and register modules
+const pluginManager = getPluginManager(prisma);
+pluginManager.register(TattooGuildModule);
+logger.info('Registered business modules');
 
 const app = express();
 initSentry();

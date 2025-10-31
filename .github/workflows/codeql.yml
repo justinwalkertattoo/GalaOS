@@ -10,6 +10,7 @@ on:
 
 jobs:
   analyze:
+    if: ${{ github.event.repository.private == false || vars.ENABLE_CODEQL == 'true' }}
     name: Analyze (CodeQL)
     runs-on: ubuntu-latest
     permissions:
@@ -28,6 +29,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: none
+          config-file: ./.github/codeql/codeql-config.yml
       - name: Autobuild (skipped for JS/TS)
         if: false
         uses: github/codeql-action/autobuild@v3

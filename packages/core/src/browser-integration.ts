@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import type { Browser, Page } from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
 
@@ -41,12 +41,27 @@ export class BrowserIntegration {
     }
   }
 
+  private async getPuppeteer() {
+    const enabled = String(process.env.BROWSER_AUTOMATION_ENABLED || '').toLowerCase() === 'true';
+    if (!enabled) {
+      throw new Error('Browser automation is disabled. Set BROWSER_AUTOMATION_ENABLED=true to enable.');
+    }
+    try {
+      const mod = await import('puppeteer');
+      // @ts-expect-error default property exists at runtime
+      return (mod as any).default || mod;
+    } catch (e) {
+      throw new Error('Puppeteer is not available in this environment. Ensure dependencies and runtime libs are installed.');
+    }
+  }
+
   /**
    * Initialize browser session for ChatGPT
    */
   async initializeChatGPT(userId: string): Promise<{ loginUrl: string; sessionId: string }> {
     const sessionId = `chatgpt-${userId}-${Date.now()}`;
 
+    const puppeteer = await this.getPuppeteer();
     const browser = await puppeteer.launch({
       headless: false, // User needs to see login
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -79,6 +94,7 @@ export class BrowserIntegration {
   async initializeClaude(userId: string): Promise<{ loginUrl: string; sessionId: string }> {
     const sessionId = `claude-${userId}-${Date.now()}`;
 
+    const puppeteer = await this.getPuppeteer();
     const browser = await puppeteer.launch({
       headless: false,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],

@@ -1,0 +1,15 @@
+name: GalaOS CodeQL Configuration
+queries:
+  - security-extended
+
+paths-ignore:
+  - node_modules
+  - '**/dist'
+  - '**/build'
+  - '**/.next'
+
+# Model packs (optional):
+# When ready to pin, add entries like:
+# packs:
+#   - owner/pack-name@x.y.z
+

@@ -6,3 +6,4 @@ export * from './file-watcher';
 // export * from './oauth-integration-manager'; // Commented out to avoid conflicts with enhanced version
 export * from './oauth-integration-manager-enhanced';
 export * from './browser-integration';
+export * from './plugin-manager';

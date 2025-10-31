@@ -14,9 +14,11 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
     "@galaos/ai": "*",
+    "@galaos/core": "*",
     "@galaos/db": "*",
     "@galaos/integrations": "*",
     "@galaos/mcp": "*",
+    "@galaos/tattoo-guild": "*",
     "@galaos/types": "*",
     "@galaos/workflow": "*",
     "@trpc/server": "^10.45.0",

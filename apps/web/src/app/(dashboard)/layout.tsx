@@ -40,6 +40,8 @@ export default function DashboardLayout({ children }: SidebarProps) {
     { icon: Zap, label: 'Workflows', path: '/dashboard/workflows', color: 'text-yellow-500' },
     { icon: FolderOpen, label: 'Pages', path: '/dashboard/pages', color: 'text-gray-500' },
     { icon: Settings, label: 'Settings', path: '/dashboard/settings', color: 'text-gray-400' },
+    // Admin utilities
+    { icon: Settings, label: 'Admin: Rate Limit', path: '/admin/rate-limit', color: 'text-gray-400' },
   ];
 
   return (

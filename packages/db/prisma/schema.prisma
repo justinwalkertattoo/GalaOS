@@ -105,6 +105,7 @@ model Workspace {
   pages       Page[]
   databases   Database[]
   workflows   Workflow[]
+  modules     BusinessModule[]
 
   @@map("workspaces")
 }
@@ -855,4 +856,128 @@ model ProviderAPIKey {
   @@unique([userId, provider, name])
   @@index([provider])
   @@map("provider_api_keys")
+}
+
+// ============================================================================
+// BUSINESS MODULES (Plugin System)
+// ============================================================================
+
+model BusinessModule {
+  id          String   @id @default(cuid())
+  workspaceId String
+
+  // Module Information
+  moduleType  String   // tattoo-guild, future-brand, etc.
+  name        String   // Display name
+  description String?
+  icon        String?
+  version     String   @default("1.0.0")
+
+  // Configuration
+  config      Json     @default("{}")  // Module-specific configuration
+  settings    Json     @default("{}")  // User-customizable settings
+
+  // Status
+  isActive    Boolean  @default(true)
+  isInstalled Boolean  @default(false)
+
+  // Installation metadata
+  installedAt DateTime?
+  installedBy String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  routes      ModuleRoute[]
+  workflows   ModuleWorkflow[]
+  databases   ModuleDatabase[]
+
+  @@unique([workspaceId, moduleType])
+  @@index([moduleType])
+  @@map("business_modules")
+}
+
+model ModuleRoute {
+  id          String   @id @default(cuid())
+  moduleId    String
+
+  // Route Information
+  path        String   // /tattoo-guild/clients
+  name        String
+  description String?
+  icon        String?
+
+  // Component reference
+  component   String   // tattoo-guild/ClientList
+
+  // Access control
+  requiredRole String? // owner, admin, member
+  isPublic    Boolean  @default(false)
+
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  module      BusinessModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, path])
+  @@map("module_routes")
+}
+
+model ModuleWorkflow {
+  id          String   @id @default(cuid())
+  moduleId    String
+
+  // Workflow Information
+  name        String
+  description String?
+  category    String   // client-management, design, instagram, revenue
+
+  // Workflow template
+  template    Json     // Workflow definition with nodes/edges
+
+  // Trigger configuration
+  trigger     Json?    // When this workflow auto-runs
+
+  // Usage tracking
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime?
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  module      BusinessModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@map("module_workflows")
+}
+
+model ModuleDatabase {
+  id          String   @id @default(cuid())
+  moduleId    String
+
+  // Database Information
+  name        String
+  description String?
+  icon        String?
+
+  // Schema definition
+  schema      Json     // Database properties and structure
+
+  // Template data
+  templateData Json?   // Optional seed data
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  module      BusinessModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, name])
+  @@map("module_databases")
 }
