@@ -39,7 +39,10 @@
       "Bash(gh run list:*)",
       "Bash(npm install:*)",
       "Bash(npm run lint:*)",
-      "Bash(gh pr list:*)"
+      "Bash(gh pr list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(docker build:*)",
+      "Bash(gh run watch:*)"
     ],
     "deny": [],
     "ask": []

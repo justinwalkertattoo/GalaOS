@@ -1,0 +1,17 @@
+{
+  "name": "@galaos/catalog",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Curated SDK, API, and license catalog for GalaOS (reference + helpers)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
+
