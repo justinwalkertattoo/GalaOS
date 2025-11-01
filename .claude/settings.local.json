@@ -42,7 +42,11 @@
       "Bash(gh pr list:*)",
       "Bash(gh issue view:*)",
       "Bash(docker build:*)",
-      "Bash(gh run watch:*)"
+      "Bash(gh run watch:*)",
+      "Bash(git pull:*)",
+      "Bash(npm view:*)",
+      "Bash(timeout 60 npm run build:*)",
+      "Bash(gh issue create:*)"
     ],
     "deny": [],
     "ask": []
