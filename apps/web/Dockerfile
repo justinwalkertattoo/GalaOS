@@ -7,8 +7,19 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
+COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
+COPY apps/worker/package.json ./apps/worker/
+COPY apps/desktop/package.json ./apps/desktop/
+COPY packages/ai/package.json ./packages/ai/
+COPY packages/api-types/package.json ./packages/api-types/
+COPY packages/core/package.json ./packages/core/
+COPY packages/db/package.json ./packages/db/
+COPY packages/integrations/package.json ./packages/integrations/
+COPY packages/mcp/package.json ./packages/mcp/
+COPY packages/tattoo-guild/package.json ./packages/tattoo-guild/
 COPY packages/types/package.json ./packages/types/
+COPY packages/workflow/package.json ./packages/workflow/
 
 # Install dependencies
 RUN npm ci
